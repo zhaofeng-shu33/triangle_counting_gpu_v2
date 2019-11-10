@@ -1,3 +1,4 @@
+#include "MyGraph.h"
 #include <iostream>
 #include <fstream>
 #include <string>
