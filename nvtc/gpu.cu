@@ -50,6 +50,36 @@ __global__ void UnzipEdges(int m, int* edges, int* unzipped_edges) {
   }
 }
 
+__global__ void CalculateTriangles_v2(int n, const int* dev_neighbor, const int64_t* dev_offset, uint64_t* results) {
+   int from =
+    gridDim.x * blockDim.x * deviceIdx +
+    blockDim.x * blockIdx.x +
+    threadIdx.x;
+  int step = deviceCount * gridDim.x * blockDim.x;
+  
+  uint64_t count = 0;
+  for (int i = from; i < n; i += step) {	
+    for(int u = dev_offset[i]; u <= dev_offset[i+1]-1; u++){
+    	int j = dev_neighbor[u];
+	int j_it = dev_neighbor + dev_offset[j];
+        int i_it = dev_neighbor + dev_offset[i];
+	
+	while(*j_it <= dev_neighbor[dev_offset[j+1]-1] && *i_it <= dev_neighbor[dev_offset[i+1]-1]){
+		if (*i_it == *j_it){
+			count++;
+			i_it++;
+			j_it++;
+		}
+		else if (*i_it < *j_it)
+			i_it++; 
+		else
+			j_it++;
+	}
+     }
+  }
+  results[blockDim.x * blockIdx.x + threadIdx.x] = count;
+}
+
 __global__ void CalculateTriangles(
     int m, const int* __restrict__ edges, const int* __restrict__ nodes,
     uint64_t* results, int deviceCount = 1, int deviceIdx = 0) {
@@ -188,6 +218,28 @@ uint64_t MultiGPUCalculateTriangles(
 
 uint64_t GpuForward(const Edges& edges) {
   return MultiGpuForward(edges, 1);
+}
+
+uint64_t GpuForward_v2(const MyGraph& myGraph){
+    int64_t* dev_offset;
+    CUCHECK(cudaMalloc(&dev_offset, (myGraph.nodeid_max + 2) * sizeof(int64_t)));
+    CUCHECK(cudaMemcpyAsync(
+       dev_offset, myGraph.offset, (myGraph.nodeid_max + 2) * sizeof(int64_t), cudaMemcpyHostToDevice));
+    CUCHECK(cudaDeviceSynchronize());
+    CUCHECK(cudaMalloc(&dev_neighbor, (2 * myGraph.edge_num) * sizeof(int64_t)));
+    CUCHECK(cudaMemcpyAsync(
+       dev_neighbor, myGraph.neighbor, (2 * myGraph.edge_num) * sizeof(int64_t), cudaMemcpyHostToDevice));
+    CUCHECK(cudaDeviceSynchronize());
+    const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();	
+    uint64_t* dev_results;
+    CUCHECK(cudaMalloc(&dev_results,
+          NUM_BLOCKS * NUM_THREADS * sizeof(uint64_t)));
+
+    CalculateTriangles_v2<<<NUM_BLOCKS, NUM_THREADS>>>(
+        myGraph.nodeid_max, dev_neighbor, dev_offset, dev_results);
+    CUCHECK(cudaDeviceSynchronize());
+    uint64_t result = SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
+    return result;
 }
 
 uint64_t MultiGpuForward(const Edges& edges, int device_count) {
