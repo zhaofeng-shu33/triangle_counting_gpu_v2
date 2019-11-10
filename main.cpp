@@ -3,6 +3,7 @@
 #include "graph.h"
 #include "timer.h"
 
+#include <cstring>
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
@@ -20,7 +21,7 @@ int main(int argc, char *argv[]) {
 #if TIMECOUNTING 
     unique_ptr<Timer> t(Timer::NewTimer());
 #endif
-    Edges edges = ReadEdgesFromFile(argv[1]);
+    Edges edges = ReadEdgesFromFile(argv[2]);
 #if TIMECOUNTING   
     t->Done("Read file");
     t->Done("Convert to adjacency lists");

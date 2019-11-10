@@ -202,7 +202,7 @@ uint64_t MultiGpuForward(const Edges& edges, int device_count) {
   int* dev_edges;
   int* dev_nodes;
 
-  Edges& fwd_edges = edges;
+  const Edges& fwd_edges = edges;
   
   int* dev_temp;
   CUCHECK(cudaMalloc(&dev_temp, m * 2 * sizeof(int)));
@@ -252,10 +252,10 @@ uint64_t MultiGpuForward(const Edges& edges, int device_count) {
     timer->Done("Calculate triangles");
 #endif
     result = SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
-#if TIMECOUNTING    
     CUCHECK(cudaFree(dev_results));
-#endif    
+#if TIMECOUNTING    
     timer->Done("Reduce");
+#endif
   } else {
     result = MultiGPUCalculateTriangles(
         n, m, dev_edges, dev_nodes, device_count);
@@ -266,9 +266,9 @@ uint64_t MultiGpuForward(const Edges& edges, int device_count) {
 
   CUCHECK(cudaFree(dev_edges));
   CUCHECK(cudaFree(dev_nodes));
-
+#if TIMECOUNTING
   delete timer;
-
+#endif
   return result;
 }
 
