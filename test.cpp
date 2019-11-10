@@ -12,7 +12,7 @@
 TEST(tc, io_bin) {
     Edges edges = ReadEdgesFromFile("test_io.bin");
     uint64_t trcount = GpuForward(edges);
-    EXPECT_EQ(trcount, 3); 
+    EXPECT_EQ(trcount, 1); 
     EXPECT_THROW(ReadEdgesFromFile("test_io_false.bin"),
                  std::logic_error);
 }
