@@ -6,3 +6,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
 add_subdirectory(nvtc)
+
+if(ENABLE_TESTING)
+  include(CTest)
+  find_package(GTest REQUIRED)
+  find_package(Threads REQUIRED)
+  add_executable(test_alg test.cpp)
+  target_link_libraries(test_alg GTest::GTest GTest::Main Threads::Threads nvtc_variant)
+  add_test(NAME test_alg COMMAND test_alg)
+endif()
