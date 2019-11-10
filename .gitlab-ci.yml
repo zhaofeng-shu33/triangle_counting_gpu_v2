@@ -2,4 +2,11 @@ build:
   tags:
     - bcm
   script:
-    - echo "hello"
+    - bash /etc/profile.d/modules.sh
+    - module load cuda10.0/toolkit
+    - mkdir build
+    - python3 graph_generator.py
+    - cd build
+    - cmake3 ..
+    - make -j5
+
