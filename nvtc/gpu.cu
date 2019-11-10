@@ -52,7 +52,7 @@ __global__ void UnzipEdges(int m, int* edges, int* unzipped_edges) {
   }
 }
 
-__global__ void CalculateTriangles_v2(int n, const int* dev_neighbor, const int64_t* dev_offset, uint64_t* results) {
+__global__ void CalculateTriangles_v2(int n, int* dev_neighbor, int64_t* dev_offset, uint64_t* results) {
    int from =
     gridDim.x * blockDim.x * deviceIdx +
     blockDim.x * blockIdx.x +
