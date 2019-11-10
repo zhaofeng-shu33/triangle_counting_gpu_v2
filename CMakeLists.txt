@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.13)
+project(triangle_counting_gpu_variant CUDA CXX)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CUDA_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+
+add_library(nvtc_variant gpu.cu graph.cpp timer.cpp cpu.cpp gpu-thrust.cu)
+add_executable(nvtc-variant main.cpp)
+target_link_libraries(nvtc-variant nvtc_variant)
