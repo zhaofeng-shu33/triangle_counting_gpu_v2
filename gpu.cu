@@ -191,8 +191,9 @@ uint64_t GpuForward(const Edges& edges) {
 }
 
 uint64_t MultiGpuForward(const Edges& edges, int device_count) {
+#if TIMECOUNTING
   Timer* timer = Timer::NewTimer();
-
+#endif
   CUCHECK(cudaSetDevice(0));
   const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();
 
@@ -201,36 +202,40 @@ uint64_t MultiGpuForward(const Edges& edges, int device_count) {
   int* dev_edges;
   int* dev_nodes;
 
-  Edges fwd_edges = edges;
-  timer->Done("Remove backward edges on CPU");
+  Edges& fwd_edges = edges;
   
   int* dev_temp;
   CUCHECK(cudaMalloc(&dev_temp, m * 2 * sizeof(int)));
   CUCHECK(cudaMemcpyAsync(
       dev_temp, fwd_edges.data(), m * 2 * sizeof(int), cudaMemcpyHostToDevice));
   CUCHECK(cudaDeviceSynchronize());
+#if TIMECOUNTING
   timer->Done("Memcpy edges from host do device");
-  
+#endif 
   SortEdges(m, dev_temp);
   CUCHECK(cudaDeviceSynchronize());
+#if TIMECOUNTING
   timer->Done("Sort edges");
-  
+#endif
   CUCHECK(cudaMalloc(&dev_edges, m * 2 * sizeof(int)));
   UnzipEdges<<<NUM_BLOCKS, NUM_THREADS>>>(m, dev_temp, dev_edges);
   CUCHECK(cudaFree(dev_temp));
   CUCHECK(cudaDeviceSynchronize());
+#if TIMECOUNTING  
   timer->Done("Unzip edges");
-  
+#endif
   n = NumVerticesGPU(m, dev_edges);
   CUCHECK(cudaMalloc(&dev_nodes, (n + 1) * sizeof(int)));
+#if TIMECOUNTING  
   timer->Done("Calculate number of vertices");
-  
+#endif
 
   CalculateNodePointers<false><<<NUM_BLOCKS, NUM_THREADS>>>(
       n, m, dev_edges, dev_nodes);
   CUCHECK(cudaDeviceSynchronize());
+#if TIMECOUNTING  
   timer->Done("Calculate nodes array for one-way unzipped edges");
-
+#endif
   uint64_t result = 0;
 
   if (device_count == 1) {
@@ -243,15 +248,20 @@ uint64_t MultiGpuForward(const Edges& edges, int device_count) {
         m, dev_edges, dev_nodes, dev_results);
     CUCHECK(cudaDeviceSynchronize());
     cudaProfilerStop();
+#if TIMECOUNTING    
     timer->Done("Calculate triangles");
-
+#endif
     result = SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
+#if TIMECOUNTING    
     CUCHECK(cudaFree(dev_results));
+#endif    
     timer->Done("Reduce");
   } else {
     result = MultiGPUCalculateTriangles(
         n, m, dev_edges, dev_nodes, device_count);
+#if TIMECOUNTING        
     timer->Done("Calculate triangles on multi GPU");
+#endif    
   }
 
   CUCHECK(cudaFree(dev_edges));
