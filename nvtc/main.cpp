@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 #if TIMECOUNTING 
     unique_ptr<Timer> t(Timer::NewTimer());
 #endif
-#if V2
+#if SECONDVERSION
     MyGraph myGraph(argv[2]);
 #else    
     Edges edges;
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     t->Done("Preinitialize context for device 0");
 #endif
     uint64_t result = 0;
-#if V2
+#if SECONDVERSION
     result = GpuForward_v2(myGraph);
 #else
     result = GpuForward(edges);

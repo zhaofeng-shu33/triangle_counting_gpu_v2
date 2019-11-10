@@ -1,3 +1,6 @@
 add_library(nvtc_variant gpu.cu graph.cpp timer.cpp gpu-thrust.cu mygraph.cpp)
 add_executable(nvtc-variant main.cpp)
+if(V2)
+    target_compile_definitions(nvtc-variant PUBLIC "-DSECONDVERSION=1")
+endif()
 target_link_libraries(nvtc-variant nvtc_variant)
