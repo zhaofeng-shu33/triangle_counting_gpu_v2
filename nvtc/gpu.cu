@@ -222,13 +222,14 @@ uint64_t GpuForward(const Edges& edges) {
 
 uint64_t GpuForward_v2(const MyGraph& myGraph){
     int64_t* dev_offset;
+    int* dev_neighbor;
     CUCHECK(cudaMalloc(&dev_offset, (myGraph.nodeid_max + 2) * sizeof(int64_t)));
     CUCHECK(cudaMemcpyAsync(
        dev_offset, myGraph.offset, (myGraph.nodeid_max + 2) * sizeof(int64_t), cudaMemcpyHostToDevice));
     CUCHECK(cudaDeviceSynchronize());
     CUCHECK(cudaMalloc(&dev_neighbor, (2 * myGraph.edge_num) * sizeof(int64_t)));
     CUCHECK(cudaMemcpyAsync(
-       dev_neighbor, myGraph.neighbor, (2 * myGraph.edge_num) * sizeof(int64_t), cudaMemcpyHostToDevice));
+       dev_neighbor, myGraph.neighboor, (2 * myGraph.edge_num) * sizeof(int64_t), cudaMemcpyHostToDevice));
     CUCHECK(cudaDeviceSynchronize());
     const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();	
     uint64_t* dev_results;
