@@ -14,21 +14,6 @@
 
 using namespace std;
 
-int main(int argc, char** argv) {
-	std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
-	MyGraph G(argv[2]);
-	clock_t endTime = clock();
-	for (int i = 0; i < 5; i++) {
-		for (int j = 0; j < G.degree[i]; j++) {
-			cout << G.neighboor[G.offset[i] + j] << ' ';
-		}
-		cout << endl;
-	}
-	cout << G.arc_exist_sorted(3, 12174071) << G.arc_exist_sorted(3, 12174072) << endl;
-	std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();
-	float time_used = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() / 1000.0;
-	cout << "The run time is: " << time_used << "s" << endl;
-}
 
 MyGraph::MyGraph(const char* file_name){
 	// Temporal variables
