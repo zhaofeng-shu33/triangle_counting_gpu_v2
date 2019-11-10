@@ -201,68 +201,30 @@ uint64_t MultiGpuForward(const Edges& edges, int device_count) {
   int* dev_edges;
   int* dev_nodes;
 
-  if ( false && (uint64_t)m * 4 * sizeof(int) < GlobalMemory()) {  // just approximation
-    CUCHECK(cudaMalloc(&dev_edges, m * 4 * sizeof(int)));
-    CUCHECK(cudaMemcpyAsync(
-          dev_edges, edges.data(), m * 2 * sizeof(int),
-          cudaMemcpyHostToDevice));
-    CUCHECK(cudaDeviceSynchronize());
-    timer->Done("Memcpy edges from host do device");
-
-    n = NumVerticesGPU(m, dev_edges);
-    timer->Done("Calculate number of vertices");
-
-    SortEdges(m, dev_edges);
-    CUCHECK(cudaDeviceSynchronize());
-    timer->Done("Sort edges");
-
-    CUCHECK(cudaMalloc(&dev_nodes, (n + 1) * sizeof(int)));
-    CalculateNodePointers<true><<<NUM_BLOCKS, NUM_THREADS>>>(
-        n, m, dev_edges, dev_nodes);
-    CUCHECK(cudaDeviceSynchronize());
-    timer->Done("Calculate nodes array for two-way zipped edges");
-
-    bool* dev_flags;
-    CUCHECK(cudaMalloc(&dev_flags, m * sizeof(bool)));
-    CalculateFlags<<<NUM_BLOCKS, NUM_THREADS>>>(
-        m, dev_edges, dev_nodes, dev_flags);
-    RemoveMarkedEdges(m, dev_edges, dev_flags);
-    CUCHECK(cudaFree(dev_flags));
-    CUCHECK(cudaDeviceSynchronize());
-    m /= 2;
-    timer->Done("Remove backward edges");
-
-    UnzipEdges<<<NUM_BLOCKS, NUM_THREADS>>>(m, dev_edges, dev_edges + 2 * m);
-    CUCHECK(cudaMemcpyAsync(
-          dev_edges, dev_edges + 2 * m, 2 * m * sizeof(int),
-          cudaMemcpyDeviceToDevice));
-    CUCHECK(cudaDeviceSynchronize());
-    timer->Done("Unzip edges");
-  } else {
-    Edges fwd_edges = edges;
-    timer->Done("Remove backward edges on CPU");
-
-    int* dev_temp;
-    CUCHECK(cudaMalloc(&dev_temp, m * 2 * sizeof(int)));
-    CUCHECK(cudaMemcpyAsync(
-          dev_temp, fwd_edges.data(), m * 2 * sizeof(int), cudaMemcpyHostToDevice));
-    CUCHECK(cudaDeviceSynchronize());
-    timer->Done("Memcpy edges from host do device");
-
-    SortEdges(m, dev_temp);
-    CUCHECK(cudaDeviceSynchronize());
-    timer->Done("Sort edges");
-
-    CUCHECK(cudaMalloc(&dev_edges, m * 2 * sizeof(int)));
-    UnzipEdges<<<NUM_BLOCKS, NUM_THREADS>>>(m, dev_temp, dev_edges);
-    CUCHECK(cudaFree(dev_temp));
-    CUCHECK(cudaDeviceSynchronize());
-    timer->Done("Unzip edges");
-
-    n = NumVerticesGPU(m, dev_edges);
-    CUCHECK(cudaMalloc(&dev_nodes, (n + 1) * sizeof(int)));
-    timer->Done("Calculate number of vertices");
-  }
+  Edges fwd_edges = edges;
+  timer->Done("Remove backward edges on CPU");
+  
+  int* dev_temp;
+  CUCHECK(cudaMalloc(&dev_temp, m * 2 * sizeof(int)));
+  CUCHECK(cudaMemcpyAsync(
+      dev_temp, fwd_edges.data(), m * 2 * sizeof(int), cudaMemcpyHostToDevice));
+  CUCHECK(cudaDeviceSynchronize());
+  timer->Done("Memcpy edges from host do device");
+  
+  SortEdges(m, dev_temp);
+  CUCHECK(cudaDeviceSynchronize());
+  timer->Done("Sort edges");
+  
+  CUCHECK(cudaMalloc(&dev_edges, m * 2 * sizeof(int)));
+  UnzipEdges<<<NUM_BLOCKS, NUM_THREADS>>>(m, dev_temp, dev_edges);
+  CUCHECK(cudaFree(dev_temp));
+  CUCHECK(cudaDeviceSynchronize());
+  timer->Done("Unzip edges");
+  
+  n = NumVerticesGPU(m, dev_edges);
+  CUCHECK(cudaMalloc(&dev_nodes, (n + 1) * sizeof(int)));
+  timer->Done("Calculate number of vertices");
+  
 
   CalculateNodePointers<false><<<NUM_BLOCKS, NUM_THREADS>>>(
       n, m, dev_edges, dev_nodes);
