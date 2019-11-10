@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <utility>
+#include <map>
 
 typedef std::vector< std::pair<int, int> > Edges;
 typedef std::vector< std::vector<int> > AdjList;
