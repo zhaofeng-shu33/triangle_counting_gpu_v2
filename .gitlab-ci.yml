@@ -3,7 +3,7 @@ build:
     - bcm
   script:
     - bash /etc/profile.d/modules.sh
-    - module load cuda10.0/toolkit
+    - module load cuda10.0/toolkit slurm
     - mkdir build
     - python3 graph_generator.py
     - cd build
