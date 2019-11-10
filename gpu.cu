@@ -201,8 +201,8 @@ uint64_t MultiGpuForward(const Edges& edges, int device_count) {
   int* dev_edges;
   int* dev_nodes;
 
-  if ((uint64_t)m * 4 * sizeof(int) < GlobalMemory()) {  // just approximation
-    CUCHECK(cudaMalloc(&dev_edges, m * 2 * sizeof(int)));
+  if ( false && (uint64_t)m * 4 * sizeof(int) < GlobalMemory()) {  // just approximation
+    CUCHECK(cudaMalloc(&dev_edges, m * 4 * sizeof(int)));
     CUCHECK(cudaMemcpyAsync(
           dev_edges, edges.data(), m * 2 * sizeof(int),
           cudaMemcpyHostToDevice));
@@ -239,8 +239,7 @@ uint64_t MultiGpuForward(const Edges& edges, int device_count) {
     CUCHECK(cudaDeviceSynchronize());
     timer->Done("Unzip edges");
   } else {
-    Edges fwd_edges = RemoveBackwardEdgesCPU(edges);
-    m /= 2;
+    Edges fwd_edges = edges;
     timer->Done("Remove backward edges on CPU");
 
     int* dev_temp;

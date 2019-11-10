@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
   Edges edges = ReadEdgesFromFile(argv[1]);
   t->Done("Read file");
   // AdjList graph = EdgesToAdjList(edges);
-  // t->Done("Convert to adjacency lists");
+  t->Done("Convert to adjacency lists");
 
   int num_nodes = NumVertices(edges);
   int num_edges = edges.size();
