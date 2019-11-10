@@ -1,0 +1,5 @@
+build:
+  tags:
+    - bcm
+  script:
+    - echo "hello"
