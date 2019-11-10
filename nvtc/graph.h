@@ -10,7 +10,7 @@ typedef std::vector< std::vector<int> > AdjList;
 
 int NumVertices(const Edges& edges);
 
-Edges ReadEdgesFromFile(const char* filename);
+void ReadEdgesFromFile(const char* filename, Edges& edges);
 void WriteEdgesToFile(const Edges& edges, const char* filename);
 
 void RemoveDuplicateEdges(Edges* edges);

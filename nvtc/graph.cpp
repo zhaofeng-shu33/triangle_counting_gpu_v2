@@ -83,7 +83,7 @@ std::pair<int, int> read_binfile_to_arclist(const char* file_name, std::vector<s
     return std::make_pair(node_id - 1, actual_edge_num);
 }
 
-Edges ReadEdgesFromFile(const char* filename, Edges& edges) {
+void ReadEdgesFromFile(const char* filename, Edges& edges) {
   read_binfile_to_arclist(filename, edges);
 }
 
