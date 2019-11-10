@@ -4,11 +4,20 @@
 #include <fstream>
 using namespace std;
 
+unsigned long get_edge(std::ifstream& fin){
+    fin.seekg(0, fin.end);
+    unsigned long edge_size = fin.tellg();
+    fin.seekg(0, fin.beg);    
+    if (edge_size % 8 != 0){
+        throw std::logic_error( std::string{} + "not multiply of 8 at " +  __FILE__ +  ":" + std::to_string(__LINE__));
+    }
+    return edge_size / 8;
+}
+
 Edges ReadEdgesFromFile(const char* filename) {
   Edges edges;
   ifstream in(filename, ios::binary);
-  int m;
-  in.read((char*)&m, sizeof(int));
+  int m = get_edge(in);
   edges.resize(m);
   in.read((char*)edges.data(), 2 * m * sizeof(int));
   return edges;
