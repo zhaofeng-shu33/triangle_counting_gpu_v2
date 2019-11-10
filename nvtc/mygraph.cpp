@@ -134,7 +134,7 @@ MyGraph::MyGraph(const char* file_name){
 	//		break;
 	//	}
 			
-	}
+	//}
 
 	sort_neighboor();
 }
