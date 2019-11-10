@@ -21,7 +21,8 @@ int main(int argc, char *argv[]) {
 #if TIMECOUNTING 
     unique_ptr<Timer> t(Timer::NewTimer());
 #endif
-    Edges edges = ReadEdgesFromFile(argv[2]);
+    Edges edges;
+    ReadEdgesFromFile(argv[2], edges);
 #if TIMECOUNTING   
     t->Done("Read file");
     t->Done("Convert to adjacency lists");
