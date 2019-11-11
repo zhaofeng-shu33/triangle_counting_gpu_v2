@@ -77,7 +77,7 @@ __global__ void CalculateTriangles_v2(int n, int* dev_neighbor, int64_t* dev_off
 		if (d > 0)
 			j_it++;
 	}
-     }
+  }
   }
   results[blockDim.x * blockIdx.x + threadIdx.x] = count;
 }
@@ -242,7 +242,7 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
         myGraph.nodeid_max + 1, dev_neighbor, dev_offset, dev_results);
     CUCHECK(cudaDeviceSynchronize());
     uint64_t result = SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
-    return result;
+    return result / 6;
 }
 
 uint64_t MultiGpuForward(const Edges& edges, int device_count) {

@@ -26,3 +26,14 @@ TEST(tc, io_nvgraph) {
     EXPECT_EQ(trcount, 3); 
 }
 
+TEST(tcv2, io_bin) {
+    MyGraph myGraph("test_io.bin");
+    uint64_t tcount = GpuForward_v2(myGraph);
+    EXPECT_EQ(tcount, 1);
+}
+
+TEST(tcv2, io_nvgraph) {
+    MyGraph myGraph("test_io_nvgraph.bin");
+    uint64_t tcount = GpuForward_v2(myGraph);
+    EXPECT_EQ(tcount, 3);
+}
