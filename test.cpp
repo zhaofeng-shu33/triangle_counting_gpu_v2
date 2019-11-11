@@ -46,4 +46,5 @@ TEST(dataio, io_bin) {
    std::vector<std::pair<int, int>> arcs_v2;
    std::pair<int, int> info_pair_v2 = read_binfile_to_arclist_v2("test_io.bin", arcs_v2);
    EXPECT_EQ(info_pair, info_pair_v2);
+   EXPECT_EQ(arcs, arcs_v2);
 }
