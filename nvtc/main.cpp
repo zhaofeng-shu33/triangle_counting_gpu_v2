@@ -24,9 +24,13 @@ int main(int argc, char *argv[]) {
     MyGraph myGraph(argv[2]);
 #else    
     const char* io_hint = std::getenv("DATAIO");
+    const char* device_hint = std::getenv("DEVICEHINT");
     Edges edges;
     std::pair<int, int> info_pair;
-    if(io_hint == NULL or strcmp(io_hint, "V1") == 0) {
+    if(device_hint != NULL && strcmp(device_hint, "CPU") == 0) {
+        info_pair = read_binfile_to_arclist_v2(argv[2], edges);
+    }
+    else if(io_hint == NULL || strcmp(io_hint, "V1") == 0) {
         info_pair = read_binfile_to_arclist(argv[2], edges);
     }
     else if (strcmp(io_hint, "V2") == 0) {
@@ -44,8 +48,7 @@ int main(int argc, char *argv[]) {
 
 #if TRCOUNTING
     uint64_t result = 0;
-    const char* device_hint = std::getenv("DEVICEHINT");
-    if(device_hint == NULL or strcmp(device_hint, "GPU") == 0){
+    if(device_hint == NULL || strcmp(device_hint, "GPU") == 0){
 #if SECONDVERSION
         result = GpuForward_v2(myGraph);
 #else
