@@ -1,5 +1,4 @@
 #include "counting_cpu.h"
-
 uint64_t CpuForward(const Edges& edges, int node_num) {
    int m = edges.size();
    int* dev_edges = new int [ 2 * m ];
@@ -19,6 +18,7 @@ uint64_t CpuForward(const Edges& edges, int node_num) {
    }
    // Calculate Triangles
    uint64_t count = 0;
+#pragma omp parallel for reduction(+:count)
    for (int i = 0; i < m; i++) {
      int u = dev_edges[i], v = dev_edges[m + i];
      int u_it = dev_nodes[u], u_end = dev_nodes[u + 1];
