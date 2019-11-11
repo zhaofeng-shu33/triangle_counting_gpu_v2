@@ -14,7 +14,7 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
     if (argc != 3 || strcmp(argv[1], "-f") != 0) {
-        std::cout << "Usage: lemon-tc -f input.bin" << std::endl;
+        std::cout << "Usage: nvtc-variant -f input.bin" << std::endl;
         exit(-1);
     }
 #if TIMECOUNTING 
