@@ -239,7 +239,7 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
           NUM_BLOCKS * NUM_THREADS * sizeof(uint64_t)));
 
     CalculateTriangles_v2<<<NUM_BLOCKS, NUM_THREADS>>>(
-        myGraph.nodeid_max, dev_neighbor, dev_offset, dev_results);
+        myGraph.nodeid_max + 1, dev_neighbor, dev_offset, dev_results);
     CUCHECK(cudaDeviceSynchronize());
     uint64_t result = SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
     return result;
