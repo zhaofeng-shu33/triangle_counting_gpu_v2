@@ -28,4 +28,7 @@ inline void NormalizeEdges(Edges* edges) {
 }
 
 AdjList EdgesToAdjList(const Edges& edges);
+
+std::pair<int, int> read_binfile_to_arclist_v2(const char* file_name, std::vector<std::pair<int, int>>& arcs);
+std::pair<int, int> read_binfile_to_arclist(const char* file_name, std::vector<std::pair<int, int>>& arcs);
 #endif
