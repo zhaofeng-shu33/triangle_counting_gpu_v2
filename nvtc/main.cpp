@@ -43,17 +43,21 @@ int main(int argc, char *argv[]) {
 #endif
 
 #if TRCOUNTING
-#if TIMECOUNTING
-    t->Reset();
-    PreInitGpuContext(0);
-    t->Done("Preinitialize context for device 0");
-#endif
     uint64_t result = 0;
+    const char* device_hint = std::getenv("DEVICEHINT");
+    if(device_hint == NULL or strcmp(device_hint, "GPU") == 0){
 #if SECONDVERSION
-    result = GpuForward_v2(myGraph);
+        result = GpuForward_v2(myGraph);
 #else
-    result = GpuForward(edges);
+        result = GpuForward(edges);
 #endif
+    }
+    else if (strcmp(device_hint, "CPU") == 0) {
+        result = CpuForward(edges, info_pair.first);
+    } else {
+        result = GpuForward(edges);
+    }
+    
     cout << "There are " << result <<
             " triangles in the input graph." << endl;
 #endif
