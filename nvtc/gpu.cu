@@ -5,7 +5,6 @@
 
 #include <cuda_profiler_api.h>
 #include <cuda_runtime.h>
-
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
@@ -63,21 +62,22 @@ __global__ void CalculateTriangles_v2(int n, int* dev_neighbor, int64_t* dev_off
   for (int i = from; i < n; i += step) {	
     for(int u = dev_offset[i]; u <= dev_offset[i+1]-1; u++){
     	int j = dev_neighbor[u];
-	int* j_it = dev_neighbor + dev_offset[j];
-        int* i_it = dev_neighbor + dev_offset[i];
+        int64_t j_it = dev_offset[j];
+        int64_t i_it = dev_offset[i];
 	
-	while(*j_it <= dev_neighbor[dev_offset[j+1]-1] && *i_it <= dev_neighbor[dev_offset[i+1]-1]){
-		if (*i_it == *j_it){
+ 	while(j_it <= dev_offset[j+1]-1 && i_it <= dev_offset[i+1]-1){
+        int d = dev_neighbor[i_it] - dev_neighbor[j_it];
+		if ( d == 0 ){
 			count++;
 			i_it++;
 			j_it++;
 		}
-		else if (*i_it < *j_it)
+		if (d < 0)
 			i_it++; 
-		else
+		if (d > 0)
 			j_it++;
 	}
-     }
+  }
   }
   results[blockDim.x * blockIdx.x + threadIdx.x] = count;
 }
@@ -229,9 +229,9 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
     CUCHECK(cudaMemcpyAsync(
        dev_offset, myGraph.offset, (myGraph.nodeid_max + 2) * sizeof(int64_t), cudaMemcpyHostToDevice));
     CUCHECK(cudaDeviceSynchronize());
-    CUCHECK(cudaMalloc(&dev_neighbor, (2 * myGraph.edge_num) * sizeof(int64_t)));
+    CUCHECK(cudaMalloc(&dev_neighbor, (2 * myGraph.edge_num) * sizeof(int)));
     CUCHECK(cudaMemcpyAsync(
-       dev_neighbor, myGraph.neighboor, (2 * myGraph.edge_num) * sizeof(int64_t), cudaMemcpyHostToDevice));
+       dev_neighbor, myGraph.neighboor, (2 * myGraph.edge_num) * sizeof(int), cudaMemcpyHostToDevice));
     CUCHECK(cudaDeviceSynchronize());
     const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();	
     uint64_t* dev_results;
@@ -239,10 +239,10 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
           NUM_BLOCKS * NUM_THREADS * sizeof(uint64_t)));
 
     CalculateTriangles_v2<<<NUM_BLOCKS, NUM_THREADS>>>(
-        myGraph.nodeid_max, dev_neighbor, dev_offset, dev_results);
+        myGraph.nodeid_max + 1, dev_neighbor, dev_offset, dev_results);
     CUCHECK(cudaDeviceSynchronize());
     uint64_t result = SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
-    return result;
+    return result / 6;
 }
 
 uint64_t MultiGpuForward(const Edges& edges, int device_count) {

@@ -20,8 +20,12 @@ int main(int argc, char *argv[]) {
 #if TIMECOUNTING 
     unique_ptr<Timer> t(Timer::NewTimer());
 #endif
+#if SECONDVERSION
+    MyGraph myGraph(argv[2]);
+#else    
     Edges edges;
     ReadEdgesFromFile(argv[2], edges);
+#endif
 #if TIMECOUNTING   
     t->Done("Read file");
     t->Done("Convert to adjacency lists");
@@ -33,8 +37,12 @@ int main(int argc, char *argv[]) {
     PreInitGpuContext(0);
     t->Done("Preinitialize context for device 0");
 #endif
-    uint64_t result = GpuForward(edges);
-
+    uint64_t result = 0;
+#if SECONDVERSION
+    result = GpuForward_v2(myGraph);
+#else
+    result = GpuForward(edges);
+#endif
     cout << "There are " << result <<
             " triangles in the input graph." << endl;
 }
