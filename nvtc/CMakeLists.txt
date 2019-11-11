@@ -1,6 +1,7 @@
 add_library(nvtc_variant_cu gpu.cu gpu-thrust.cu)
 if("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
     target_compile_options(nvtc_variant_cu PRIVATE "-G")
+    target_compile_options(nvtc_variant_cu PRIVATE "-O0")
 endif()
 
 add_library(nvtc_variant graph.cpp timer.cpp mygraph.cpp)
