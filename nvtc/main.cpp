@@ -1,7 +1,7 @@
 #include "gpu.h"
 #include "graph.h"
 #include "timer.h"
-
+#include "counting_cpu.h"
 #include <cstring>
 #include <cassert>
 #include <cstdlib>

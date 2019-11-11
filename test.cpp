@@ -6,7 +6,7 @@
 
 #include <nvtc/graph.h>
 #include <nvtc/gpu.h>
-
+#include <nvtc/counting_cpu.h>
 
 #if GPU
 TEST(tc, io_bin) {

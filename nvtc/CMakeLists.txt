@@ -4,7 +4,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
     target_compile_options(nvtc_variant_cu PRIVATE "-O0")
 endif()
 
-add_library(nvtc_variant graph.cpp timer.cpp mygraph.cpp)
+add_library(nvtc_variant graph.cpp timer.cpp mygraph.cpp counting_cpu.cpp)
 add_executable(nvtc-variant main.cpp)
 if(V2)
     target_compile_definitions(nvtc-variant PUBLIC "-DSECONDVERSION=1")
