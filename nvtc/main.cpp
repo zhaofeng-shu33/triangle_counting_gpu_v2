@@ -27,18 +27,7 @@ int main(int argc, char *argv[]) {
     const char* device_hint = std::getenv("DEVICEHINT");
     Edges edges;
     std::pair<int, int> info_pair;
-    if(device_hint != NULL && strcmp(device_hint, "CPU") == 0) {
-        info_pair = read_binfile_to_arclist_v2(argv[2], edges);
-    }
-    else if(io_hint == NULL || strcmp(io_hint, "V1") == 0) {
-        info_pair = read_binfile_to_arclist(argv[2], edges);
-    }
-    else if (strcmp(io_hint, "V2") == 0) {
-        info_pair = read_binfile_to_arclist_v2(argv[2], edges);
-    }
-    else {
-        info_pair = read_binfile_to_arclist(argv[2], edges);
-    }
+    info_pair = read_binfile_to_arclist_v2(argv[2], edges);
 #if VERBOSE
     t->Done("Reading Data");
     std::cout << "Num of Nodes: " << info_pair.first << std::endl;
