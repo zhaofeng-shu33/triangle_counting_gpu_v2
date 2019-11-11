@@ -10,7 +10,7 @@ we use sparse matrix (CSC) to store the graph. Two arrays are required, (n+1) le
 
 For example, suppose our graph has (0,1),(1,2),(1,3),(2,3),(2,4),(3,4),(3,5),(4,5).
 n=6,m=8.
-Storing in CSR Upper Triangular Format is equivalent to:
+Storing in CSR Lower Triangular Format is equivalent to:
 `[0,1,1,2,2,3,3,4]`(m) and `[0,0,1,2,4,6,8]`(n+1).
 
 ```Python
