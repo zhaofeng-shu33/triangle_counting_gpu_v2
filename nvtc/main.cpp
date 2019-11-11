@@ -23,15 +23,25 @@ int main(int argc, char *argv[]) {
 #if SECONDVERSION
     MyGraph myGraph(argv[2]);
 #else    
+    const char* io_hint = std::getenv("DATAIO");
     Edges edges;
-    ReadEdgesFromFile(argv[2], edges);
+    std::pair<int, int> info_pair;
+    if(io_hint == NULL or strcmp(io_hint, "V1") == 0) {
+        info_pair = read_binfile_to_arclist(argv[2], edges);
+    }
+    else if (strcmp(io_hint, "V2") == 0) {
+        info_pair = read_binfile_to_arclist_v2(argv[2], edges);
+    }
+    else {
+        info_pair = read_binfile_to_arclist(argv[2], edges);
+    }
+#if VERBOSE
+    std::cout << "Num of Nodes: " << info_pair.first << std::endl;
+    std::cout << "Num of Edges: " << info_pair.second << std::endl;
 #endif
-#if TIMECOUNTING   
-    t->Done("Read file");
-    t->Done("Convert to adjacency lists");
 #endif
 
-
+#if TRCOUNTING
 #if TIMECOUNTING
     t->Reset();
     PreInitGpuContext(0);
@@ -45,4 +55,5 @@ int main(int argc, char *argv[]) {
 #endif
     cout << "There are " << result <<
             " triangles in the input graph." << endl;
+#endif
 }
