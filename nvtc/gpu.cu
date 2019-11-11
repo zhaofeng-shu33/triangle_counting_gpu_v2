@@ -62,16 +62,16 @@ __global__ void CalculateTriangles_v2(int n, int* dev_neighbor, int64_t* dev_off
   for (int i = from; i < n; i += step) {	
     for(int u = dev_offset[i]; u <= dev_offset[i+1]-1; u++){
     	int j = dev_neighbor[u];
-	int* j_it = dev_neighbor + dev_offset[j];
-        int* i_it = dev_neighbor + dev_offset[i];
+	    int64_t j_it = dev_offset[j];
+        int64_t i_it = dev_offset[i];
 	
-	while(*j_it <= dev_neighbor[dev_offset[j+1]-1] && *i_it <= dev_neighbor[dev_offset[i+1]-1]){
-		if (*i_it == *j_it){
+ 	while(dev_neighbor[j_it] <= dev_neighbor[dev_offset[j+1]-1] && dev_neighbor[i_it] <= dev_neighbor[dev_offset[i+1]-1]){
+		if (dev_neighbor[i_it] == dev_neighbor[j_it]){
 			count++;
 			i_it++;
 			j_it++;
 		}
-		else if (*i_it < *j_it)
+		else if (dev_neighbor[i_it] < dev_neighbor[j_it])
 			i_it++; 
 		else
 			j_it++;
