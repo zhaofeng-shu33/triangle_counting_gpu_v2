@@ -60,7 +60,8 @@ std::pair<int, int> read_binfile_to_arclist_v2(const char* file_name, std::vecto
         last_value = arcs[i];
     }
     // sort arcs again
-    std::sort(arcs.begin(), arcs.end());
+    uint64_t* arcs_start_ptr = (uint64_t*)arcs.data();
+    std::sort(arcs_start_ptr, arcs_start_ptr + arcs.size());
     // find the number of duplicate edges
     int edges = 0;
     while (edges < arcs.size()) {
