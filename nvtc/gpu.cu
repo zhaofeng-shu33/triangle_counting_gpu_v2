@@ -264,33 +264,26 @@ uint64_t MultiGpuForward(const Edges& edges, int device_count) {
   CUCHECK(cudaMemcpyAsync(
       dev_temp, fwd_edges.data(), m * 2 * sizeof(int), cudaMemcpyHostToDevice));
   CUCHECK(cudaDeviceSynchronize());
-#if TIMECOUNTING
-  timer->Done("Memcpy edges from host do device");
-#endif 
+  // Memcpy edges from host to device
   SortEdges(m, dev_temp);
   CUCHECK(cudaDeviceSynchronize());
-#if TIMECOUNTING
-  timer->Done("Sort edges");
-#endif
+  // Sort edges
+
   CUCHECK(cudaMalloc(&dev_edges, m * 2 * sizeof(int)));
   UnzipEdges<<<NUM_BLOCKS, NUM_THREADS>>>(m, dev_temp, dev_edges);
   CUCHECK(cudaFree(dev_temp));
   CUCHECK(cudaDeviceSynchronize());
-#if TIMECOUNTING  
-  timer->Done("Unzip edges");
-#endif
+  // Unzip edges
+
   n = NumVerticesGPU(m, dev_edges);
   CUCHECK(cudaMalloc(&dev_nodes, (n + 1) * sizeof(int)));
-#if TIMECOUNTING  
-  timer->Done("Calculate number of vertices");
-#endif
+  // Calculate number of vertices
+
 
   CalculateNodePointers<false><<<NUM_BLOCKS, NUM_THREADS>>>(
       n, m, dev_edges, dev_nodes);
   CUCHECK(cudaDeviceSynchronize());
-#if TIMECOUNTING  
-  timer->Done("Calculate nodes array for one-way unzipped edges");
-#endif
+  // Calculate nodes array for one-way unzipped edges
   uint64_t result = 0;
 
   if (device_count == 1) {
@@ -303,14 +296,12 @@ uint64_t MultiGpuForward(const Edges& edges, int device_count) {
         m, dev_edges, dev_nodes, dev_results);
     CUCHECK(cudaDeviceSynchronize());
     cudaProfilerStop();
-#if TIMECOUNTING    
-    timer->Done("Calculate triangles");
-#endif
+    // Reduce
     result = SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
-    CUCHECK(cudaFree(dev_results));
 #if TIMECOUNTING    
-    timer->Done("Reduce");
+    timer->Done("Calculate triangles used time: ");
 #endif
+    CUCHECK(cudaFree(dev_results));
   } else {
     result = MultiGPUCalculateTriangles(
         n, m, dev_edges, dev_nodes, device_count);

@@ -14,7 +14,7 @@ class TimerImpl : public Timer {
     Clock::time_point now = Clock::now();
     int res = chrono::duration_cast<chrono::milliseconds>(now - last).count();
     last = now;
-    cerr << label << " " << res << endl;
+    cerr << label << " " << res << " ms" << endl;
     return res;
   }
 
