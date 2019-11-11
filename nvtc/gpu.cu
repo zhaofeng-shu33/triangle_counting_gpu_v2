@@ -68,6 +68,7 @@ __global__ void CalculateTriangles_v2(int n, int* dev_neighbor, int64_t* dev_off
 	
 	while(*j_it <= dev_neighbor[dev_offset[j+1]-1] && *i_it <= dev_neighbor[dev_offset[i+1]-1]){
 		if (*i_it == *j_it){
+		    cuPrintf("Param value\n");
 			count++;
 			i_it++;
 			j_it++;
