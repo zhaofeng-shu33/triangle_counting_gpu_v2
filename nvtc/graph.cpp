@@ -2,6 +2,12 @@
 
 #include <algorithm>
 #include <fstream>
+#if __GNUG__
+#include <bits/stdc++.h>
+#else
+#define INT_MAX 2147483647
+#endif
+
 using namespace std;
 
 unsigned long get_edge(std::ifstream& fin){
@@ -26,18 +32,18 @@ std::pair<int, int> read_binfile_to_arclist_v2(const char* file_name, std::vecto
     fin.read((char*)arcs.data(), 2 * file_size * sizeof(int));
     int node_num = 0;
     for(std::vector<std::pair<int, int>>::iterator it = arcs.begin(); it != arcs.end(); ++it){
-        if(*it->first > node_num) {
-            node_num = *it->first;
+        if(it->first > node_num) {
+            node_num = it->first;
         }
-        else if(*it->second > node_num) {
-            node_num = *it->second;
+        else if(it->second > node_num) {
+            node_num = it->second;
         }
-        if(*it->first == *it->second) {
-            *it->first = INT_MAX;
-            *it->second = INT_MAX;
+        if(it->first == it->second) {
+            it->first = INT_MAX;
+            it->second = INT_MAX;
         }
-        else if(*it->first > *it->second) {
-            swap(*it->first, *it->second);
+        else if(it->first > it->second) {
+            swap(it->first, it->second);
         }
         
     }
