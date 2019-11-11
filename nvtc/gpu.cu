@@ -65,7 +65,7 @@ __global__ void CalculateTriangles_v2(int n, int* dev_neighbor, int64_t* dev_off
 	    int64_t j_it = dev_offset[j];
         int64_t i_it = dev_offset[i];
 	
- 	while(dev_neighbor[j_it] <= dev_neighbor[dev_offset[j+1]-1] && dev_neighbor[i_it] <= dev_neighbor[dev_offset[i+1]-1]){
+ 	while(j_it <= dev_offset[j+1]-1 && i_it <= dev_offset[i+1]-1){
         int d = dev_neighbor[i_it] - dev_neighbor[j_it];
 		if ( d == 0 ){
 			count++;
