@@ -246,8 +246,8 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
 }
 
 uint64_t CpuForward(const Edges& edges, int node_num) {
-   int* dev_edges = new int [ 2 * m ];
    int m = edges.size();
+   int* dev_edges = new int [ 2 * m ];
    int n = node_num;
    // Unzip Edges
    for (int i = 0; i < m; i++) {
@@ -272,9 +272,9 @@ uint64_t CpuForward(const Edges& edges, int node_num) {
      while (u_it < u_end && v_it < v_end) {
        int d = a - b;
        if (d <= 0)
-         a = edges[++u_it];
+         a = dev_edges[++u_it];
        if (d >= 0)
-         b = edges[++v_it];
+         b = dev_edges[++v_it];
        if (d == 0)
          ++count;
      }       
