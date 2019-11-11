@@ -8,7 +8,7 @@
 #include <nvtc/gpu.h>
 
 
-
+#if GPU
 TEST(tc, io_bin) {
     Edges edges;
     ReadEdgesFromFile("test_io.bin", edges);
@@ -37,6 +37,7 @@ TEST(tcv2, io_nvgraph) {
     uint64_t tcount = GpuForward_v2(myGraph);
     EXPECT_EQ(tcount, 3);
 }
+#endif
 #endif
 
 TEST(dataio, io_bin) {

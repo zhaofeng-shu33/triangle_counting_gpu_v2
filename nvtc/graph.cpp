@@ -70,7 +70,7 @@ std::pair<int, int> read_binfile_to_arclist_v2(const char* file_name, std::vecto
         edges++;
     }
     arcs.resize(edges);
-    return std::make_pair(node_num, edges);
+    return std::make_pair(node_num + 1, edges);
 }
 
 std::pair<int, int> read_binfile_to_arclist(const char* file_name, std::vector<std::pair<int, int>>& arcs){
