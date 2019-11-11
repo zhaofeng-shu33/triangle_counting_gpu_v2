@@ -36,6 +36,7 @@ int main(int argc, char *argv[]) {
         info_pair = read_binfile_to_arclist(argv[2], edges);
     }
 #if VERBOSE
+    t->Done("Reading Data");
     std::cout << "Num of Nodes: " << info_pair.first << std::endl;
     std::cout << "Num of Edges: " << info_pair.second << std::endl;
 #endif
