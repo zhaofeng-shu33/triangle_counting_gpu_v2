@@ -10,9 +10,9 @@
 
 using namespace std;
 
-unsigned long get_edge(std::ifstream& fin){
+uint64_t get_edge(std::ifstream& fin){
     fin.seekg(0, fin.end);
-    unsigned long edge_size = fin.tellg();
+    uint64_t edge_size = fin.tellg();
     fin.seekg(0, fin.beg);    
     if (edge_size % 8 != 0){
         throw std::logic_error( std::string{} + "not multiply of 8 at " +  __FILE__ +  ":" + std::to_string(__LINE__));
@@ -21,10 +21,10 @@ unsigned long get_edge(std::ifstream& fin){
 }
 
 //! V2 allows node with zero degree
-std::pair<int, int> read_binfile_to_arclist_v2(const char* file_name, std::vector<std::pair<int, int>>& arcs){
+std::pair<int, uint64_t> read_binfile_to_arclist_v2(const char* file_name, std::vector<std::pair<int, int>>& arcs){
     std::ifstream fin;
     fin.open(file_name, std::ifstream::binary | std::ifstream::in);
-    unsigned long file_size = get_edge(fin);
+    uint64_t file_size = get_edge(fin);
 #if VERBOSE
     std::cout << "num of edges before cleanup: " << file_size << std::endl;
 #endif
@@ -50,7 +50,7 @@ std::pair<int, int> read_binfile_to_arclist_v2(const char* file_name, std::vecto
     std::sort(arcs.begin(), arcs.end());
     // remove the duplicate
     std::pair<int, int> last_value = arcs[0];
-    for (int64_t i = 1; i < arcs.size() - 1; i++) {
+    for (uint64_t i = 1; i < arcs.size() - 1; i++) {
         while (arcs[i].first == last_value.first &&
                arcs[i].second == last_value.second) {
             arcs[i].first = INT_MAX;
@@ -63,7 +63,7 @@ std::pair<int, int> read_binfile_to_arclist_v2(const char* file_name, std::vecto
     uint64_t* arcs_start_ptr = (uint64_t*)arcs.data();
     std::sort(arcs_start_ptr, arcs_start_ptr + arcs.size());
     // find the number of duplicate edges
-    int edges = 0;
+    uint64_t edges = 0;
     while (edges < arcs.size()) {
         if (arcs[edges].first == INT_MAX) {
             break;
