@@ -50,7 +50,7 @@ std::pair<int, int> read_binfile_to_arclist_v2(const char* file_name, std::vecto
     // sort arcs
     std::sort(arcs.begin(), arcs.end()); 
     // remove the duplicate
-    std::pair<int, int>& last_value = arcs[0];
+    std::pair<int, int> last_value = arcs[0];
     for(unsigned long i = 1; i < arcs.size() - 1; i++){
         while(arcs[i].first == last_value.first && arcs[i].second == last_value.second){
             arcs[i].first = INT_MAX;

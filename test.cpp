@@ -48,3 +48,12 @@ TEST(dataio, io_bin) {
    EXPECT_EQ(info_pair, info_pair_v2);
    EXPECT_EQ(arcs, arcs_v2);
 }
+
+TEST(dataio, io_nvgraph) {
+   std::vector<std::pair<int, int>> arcs;
+   std::pair<int, int> info_pair = read_binfile_to_arclist("test_io_nvgraph.bin", arcs);
+   std::vector<std::pair<int, int>> arcs_v2;
+   std::pair<int, int> info_pair_v2 = read_binfile_to_arclist_v2("test_io_nvgraph.bin", arcs_v2);
+   EXPECT_EQ(info_pair, info_pair_v2);
+}
+
