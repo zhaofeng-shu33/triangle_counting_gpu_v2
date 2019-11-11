@@ -60,7 +60,9 @@ int main(int argc, char *argv[]) {
     } else {
         result = GpuForward(edges);
     }
-    
+#if TIMECOUNTING    
+    t->Done("Compute number of triangles");
+#endif
     cout << "There are " << result <<
             " triangles in the input graph." << endl;
 #endif
