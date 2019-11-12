@@ -21,131 +21,57 @@ uint64_t get_edge(std::ifstream& fin){
 }
 
 //! V2 allows node with zero degree
-std::pair<int, uint64_t> read_binfile_to_arclist_v2(const char* file_name, std::vector<std::pair<int, int>>& arcs){
+std::pair<int, uint64_t> read_binfile_to_arclist_v2(const char* file_name, int* arcs){
     std::ifstream fin;
     fin.open(file_name, std::ifstream::binary | std::ifstream::in);
     uint64_t file_size = get_edge(fin);
 #if VERBOSE
     std::cout << "num of edges before cleanup: " << file_size << std::endl;
 #endif
-    arcs.resize(file_size);
-    fin.read(reinterpret_cast<char*>(arcs.data()),
+    arcs = (int*)malloc(2 * sizeof(int) * file_size);
+    fin.read(reinterpret_cast<char*>(arcs),
         2 * file_size * sizeof(int));
     int node_num = 0;
-    for (std::vector<std::pair<int, int>>::iterator it = arcs.begin();
-        it != arcs.end(); ++it) {
-        if (it->first > node_num) {
-            node_num = it->first;
-        } else if (it->second > node_num) {
-            node_num = it->second;
+    for (int i = 0;
+        i < file_size; ++i) {
+        if (arcs[2 * i] > node_num) {
+            node_num = arcs[2 * i];
+        } else if (arcs[2 * i + 1] > node_num) {
+            node_num = arcs[2 * i + 1];
         }
-        if (it->first == it->second) {
-            it->first = INT_MAX;
-            it->second = INT_MAX;
-        } else if (it->first > it->second) {
-            std::swap(it->first, it->second);
+        if (arcs[2 * i + 1] == arcs[2 * i]) {
+            arcs[2 * i + 1] = INT_MAX;
+            arcs[2 * i] = INT_MAX;
+        } else if (arcs[2 * i] > arcs[2 * i + 1]) {
+            std::swap(arcs[2 * i], arcs[2 * i + 1]);
         }
     }
     // sort arcs
-    std::sort(arcs.begin(), arcs.end());
+    uint64_t* arcs_start_ptr = (uint64_t*)arcs;
+    std::sort(arcs_start_ptr, arcs_start_ptr + file_size);
     // remove the duplicate
-    std::pair<int, int> last_value = arcs[0];
-    for (uint64_t i = 1; i < arcs.size() - 1; i++) {
-        while (arcs[i].first == last_value.first &&
-               arcs[i].second == last_value.second) {
-            arcs[i].first = INT_MAX;
-            arcs[i].second = INT_MAX;
+    uint64_t* last_value = (uint64_t*)arcs;
+    for (uint64_t i = 1; i < file_size - 1; i++) {
+        while (*(last_value + i - 1) == *(last_value + i)) {
+            arcs[2 * i] = INT_MAX;
+            arcs[2 * i + 1] = INT_MAX;
             i++;
         }
-        last_value = arcs[i];
     }
     // sort arcs again
-    uint64_t* arcs_start_ptr = (uint64_t*)arcs.data();
-    std::sort(arcs_start_ptr, arcs_start_ptr + arcs.size());
+    std::sort(arcs_start_ptr, arcs_start_ptr + file_size);
     // find the number of duplicate edges
     uint64_t edges = 0;
-    while (edges < arcs.size()) {
-        if (arcs[edges].first == INT_MAX) {
+    while (edges < file_size) {
+        if (arcs[2 * edges] == INT_MAX) {
             break;
         }
         edges++;
     }
-    arcs.resize(edges);
+    realloc(arcs, edges);
     return std::make_pair(node_num + 1, edges);
 }
 
-std::pair<int, int> read_binfile_to_arclist(const char* file_name, std::vector<std::pair<int, int>>& arcs){
-    std::ifstream fin;
-    fin.open(file_name, std::ifstream::binary | std::ifstream::in);
-    unsigned long file_size = get_edge(fin);
-#if VERBOSE
-#if TIMECOUNTING
-    std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
-#endif
-    std::cout << "Start file reading..." << std::endl;
-    int base_counter = file_size / 10 + 1;
-#endif
-    char u_array[4], v_array[4];
-    unsigned int *u, *v;
-    std::map<int, int> kv_map; 
-    std::map<std::pair<int,int>, bool> arc_exist_map;
-    int node_id = 1;
-    for(unsigned long i = 0; i < file_size; i++){
-#if VERBOSE
-    if(i % base_counter == 1)
-        std::cout << 10 * i / base_counter << "% processed for input file"  << std::endl;    
-#endif        
-        fin.read(u_array, 4);
-        fin.read(v_array, 4);
-        u = (unsigned int*)u_array;
-        v = (unsigned int*)v_array;
-        int& u_id = kv_map[*u];
-        if(u_id == 0){
-            u_id = node_id;
-            node_id ++;
-        }
-        int& v_id = kv_map[*v];
-        if(v_id == 0){
-            v_id = node_id;
-            node_id ++;
-        }
-        if(u_id < v_id){
-            bool& arc_exist = arc_exist_map[std::make_pair(u_id, v_id)];
-            if(arc_exist)
-                continue;
-            arc_exist = true;
-        }
-        else if(u_id > v_id){
-            bool& arc_exist = arc_exist_map[std::make_pair(v_id, u_id)];
-            if(arc_exist)
-                continue;
-            arc_exist = true;            
-        }       
-    }
-    int actual_edge_num = arc_exist_map.size();
-#if VERBOSE
-#if TIMECOUNTING
-    std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();
-    std::chrono::system_clock::duration dtn = end_time - start_time;
-    float time_used = std::chrono::duration_cast<std::chrono::milliseconds>(dtn).count()/1000.0;
-    std::cout << "File reading finished, Time used: " << time_used << "s" << std::endl;
-#else
-    std::cout << "File reading finished" << std::endl;
-#endif     
-    std::cout << "Actual node size " << node_id - 1<< std::endl;
-    std::cout << "Actual edges " << actual_edge_num << std::endl;
-#endif    
-    fin.close();
-    arcs.reserve(actual_edge_num);
-    for(std::map<std::pair<int,int>, bool>::iterator it = arc_exist_map.begin(); it != arc_exist_map.end(); ++it){
-        arcs.push_back(std::make_pair(it->first.first -1, it->first.second - 1));
-    }
-    return std::make_pair(node_id - 1, actual_edge_num);
-}
-
-void ReadEdgesFromFile(const char* filename, Edges& edges) {
-  read_binfile_to_arclist(filename, edges);
-}
 
 void WriteEdgesToFile(const Edges& edges, const char* filename) {
   ofstream out(filename, ios::binary);

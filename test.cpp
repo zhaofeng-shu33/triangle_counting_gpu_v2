@@ -41,17 +41,19 @@ TEST(tcv2, io_nvgraph) {
 #endif
 
 TEST(cpu, io_bin) {
-    std::vector<std::pair<int, int>> arcs;
+    int* arcs;
     std::pair<int, uint64_t> info_pair = read_binfile_to_arclist_v2("test_io.bin", arcs);
-    uint64_t tcount = CpuForward(arcs, info_pair.first);
+    uint64_t tcount = CpuForward(arcs, info_pair.first, info_pair.second);
     EXPECT_EQ(tcount, 1);    
+    free(arcs);
 }
 
 TEST(cpu, io_nvgraph) {
-    std::vector<std::pair<int, int>> arcs;
+    int* arcs;
     std::pair<int, uint64_t> info_pair = read_binfile_to_arclist_v2("test_io_nvgraph.bin", arcs);
-    uint64_t tcount = CpuForward(arcs, info_pair.first);
+    uint64_t tcount = CpuForward(arcs, info_pair.first, info_pair.second);
     EXPECT_EQ(tcount, 3);    
+    free(arcs);
 }
 
 

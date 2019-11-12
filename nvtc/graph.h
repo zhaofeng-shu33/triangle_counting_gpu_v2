@@ -10,7 +10,6 @@ typedef std::vector< std::vector<int> > AdjList;
 
 int NumVertices(const Edges& edges);
 
-void ReadEdgesFromFile(const char* filename, Edges& edges);
 void WriteEdgesToFile(const Edges& edges, const char* filename);
 
 void RemoveDuplicateEdges(Edges* edges);
@@ -29,5 +28,5 @@ inline void NormalizeEdges(Edges* edges) {
 
 AdjList EdgesToAdjList(const Edges& edges);
 
-std::pair<int, uint64_t> read_binfile_to_arclist_v2(const char* file_name, std::vector<std::pair<int, int>>& arcs);
+std::pair<int, uint64_t> read_binfile_to_arclist_v2(const char* file_name, int* arcs);
 #endif

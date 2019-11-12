@@ -25,8 +25,8 @@ int main(int argc, char *argv[]) {
 #else    
     const char* io_hint = std::getenv("DATAIO");
     const char* device_hint = std::getenv("DEVICEHINT");
-    Edges edges;
-    std::pair<int, int> info_pair;
+    int* edges;
+    std::pair<int, uint64_t> info_pair;
     info_pair = read_binfile_to_arclist_v2(argv[2], edges);
 #if VERBOSE
     t->Done("Reading Data");
@@ -42,12 +42,15 @@ int main(int argc, char *argv[]) {
         result = GpuForward_v2(myGraph);
 #else
         result = GpuForward(edges);
+        free(edges);
 #endif
     }
     else if (strcmp(device_hint, "CPU") == 0) {
-        result = CpuForward(edges, info_pair.first);
+        result = CpuForward(edges, info_pair.first, info_pair.second);
+        free(edges);
     } else {
         result = GpuForward(edges);
+        free(edges);
     }
 #if TIMECOUNTING    
     t->Done("Compute number of triangles");
