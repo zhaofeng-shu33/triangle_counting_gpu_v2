@@ -37,21 +37,23 @@ int main(int argc, char *argv[]) {
 
 #if TRCOUNTING
     uint64_t result = 0;
+#if GPU
     if(device_hint == NULL || strcmp(device_hint, "GPU") == 0){
 #if SECONDVERSION
         result = GpuForward_v2(myGraph);
 #else
         result = GpuForward(edges, info_pair.first, info_pair.second);
-        free(edges);
 #endif
     }
     else if (strcmp(device_hint, "CPU") == 0) {
         result = CpuForward(edges, info_pair.first, info_pair.second);
-        free(edges);
     } else {
         result = GpuForward(edges, info_pair.first, info_pair.second);
-        free(edges);
     }
+#else
+    result = CpuForward(edges, info_pair.first, info_pair.second);
+#endif
+    free(edges);
 #if TIMECOUNTING    
     t->Done("Compute number of triangles");
 #endif

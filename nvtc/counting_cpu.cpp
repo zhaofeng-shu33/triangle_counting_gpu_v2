@@ -15,8 +15,8 @@ uint64_t CpuForward(int* edges, int node_num, uint64_t edge_num) {
 #pragma omp parallel for reduction(+:count)
    for (uint64_t i = 0; i < m; i++) {
      int u = edges[2 * i], v = edges[2 * i + 1];
-     int u_it = dev_nodes[u], u_end = dev_nodes[u + 1];
-     int v_it = dev_nodes[v], v_end = dev_nodes[v + 1];
+     uint64_t u_it = dev_nodes[u], u_end = dev_nodes[u + 1];
+     uint64_t v_it = dev_nodes[v], v_end = dev_nodes[v + 1];
      int a = edges[2 * u_it], b = edges[2 * v_it];
      while (u_it < u_end && v_it < v_end) {
        int d = a - b;
@@ -26,7 +26,7 @@ uint64_t CpuForward(int* edges, int node_num, uint64_t edge_num) {
          b = edges[2 * (++v_it)];
        if (d == 0)
          ++count;
-     }       
+     }
    }
    delete dev_nodes;
    return count;
