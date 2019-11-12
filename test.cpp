@@ -10,20 +10,21 @@
 
 #if GPU
 TEST(tc, io_bin) {
-    Edges edges;
-    ReadEdgesFromFile("test_io.bin", edges);
-    uint64_t trcount = GpuForward(edges);
+    int* edges;
+    std::pair<int, uint64_t> info_pair = read_binfile_to_arclist_v2("test_io.bin", edges);
+    uint64_t trcount = GpuForward(edges, info_pair.first, info_pair.second);
     EXPECT_EQ(trcount, 1); 
-    edges.clear();
-    EXPECT_THROW(ReadEdgesFromFile("test_io_false.bin", edges),
+    free(edges);
+    EXPECT_THROW(read_binfile_to_arclist_v2("test_io_false.bin", edges),
                  std::logic_error);
 }
 
 TEST(tc, io_nvgraph) {
-    Edges edges;
-    ReadEdgesFromFile("test_io_nvgraph.bin", edges);
-    uint64_t trcount = GpuForward(edges);
+    int* edges;
+    std::pair<int, uint64_t> info_pair = read_binfile_to_arclist_v2("test_io_nvgraph.bin", edges);
+    uint64_t trcount = GpuForward(edges, info_pair.first, info_pair.second);
     EXPECT_EQ(trcount, 3); 
+    free(edges);
 }
 #if SECONDVERSION
 TEST(tcv2, io_bin) {

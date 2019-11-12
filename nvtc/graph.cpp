@@ -21,7 +21,7 @@ uint64_t get_edge(std::ifstream& fin){
 }
 
 //! V2 allows node with zero degree
-std::pair<int, uint64_t> read_binfile_to_arclist_v2(const char* file_name, int* arcs){
+std::pair<int, uint64_t> read_binfile_to_arclist_v2(const char* file_name, int*& arcs){
     std::ifstream fin;
     fin.open(file_name, std::ifstream::binary | std::ifstream::in);
     uint64_t file_size = get_edge(fin);
@@ -68,7 +68,6 @@ std::pair<int, uint64_t> read_binfile_to_arclist_v2(const char* file_name, int* 
         }
         edges++;
     }
-    realloc(arcs, edges);
     return std::make_pair(node_num + 1, edges);
 }
 

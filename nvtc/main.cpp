@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 #if SECONDVERSION
         result = GpuForward_v2(myGraph);
 #else
-        result = GpuForward(edges);
+        result = GpuForward(edges, info_pair.first, info_pair.second);
         free(edges);
 #endif
     }
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
         result = CpuForward(edges, info_pair.first, info_pair.second);
         free(edges);
     } else {
-        result = GpuForward(edges);
+        result = GpuForward(edges, info_pair.first, info_pair.second);
         free(edges);
     }
 #if TIMECOUNTING    
