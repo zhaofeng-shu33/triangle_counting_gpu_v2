@@ -51,12 +51,14 @@ std::pair<int, uint64_t> read_binfile_to_arclist_v2(const char* file_name, int*&
     std::sort(arcs_start_ptr, arcs_start_ptr + file_size);
     // remove the duplicate
     uint64_t* last_value = (uint64_t*)arcs;
+    uint64_t j = 1;
     for (uint64_t i = 1; i < file_size - 1; i++) {
-        while (*(last_value + i - 1) == *(last_value + i)) {
+        while (*(last_value + j - 1) == *(last_value + i)) {
             arcs[2 * i] = INT_MAX;
             arcs[2 * i + 1] = INT_MAX;
             i++;
         }
+        j = i + 1;
     }
     // sort arcs again
     std::sort(arcs_start_ptr, arcs_start_ptr + file_size);
