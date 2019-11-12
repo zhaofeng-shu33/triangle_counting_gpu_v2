@@ -2,7 +2,7 @@
 uint64_t CpuForward(int* edges, int node_num, uint64_t edge_num) {
    uint64_t m = edge_num;
    int n = node_num;
-   int* dev_nodes = new int [n + 1];
+   uint64_t* dev_nodes = new uint64_t [n + 1];
    // Calculate NodePointers
    for (uint64_t i = 0; i <= m; i++) {
       int prev = i > 0 ? edges[2 * i - 1] : -1;
