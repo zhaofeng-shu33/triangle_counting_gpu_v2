@@ -15,7 +15,7 @@ Storing in CSR Lower Triangular Format is equivalent to:
 
 ```Python
 from scipy import sparse
-a = sparse.csc_matrix(([1]*8,[0,1,1,2,2,3,3,4], [0,0,1,2,4,6,8]), shape=(6,6))
+a = sparse.csr_matrix(([1]*8,[0,1,1,2,2,3,3,4], [0,0,1,2,4,6,8]), shape=(6,6))
 print(a)
 ```
 

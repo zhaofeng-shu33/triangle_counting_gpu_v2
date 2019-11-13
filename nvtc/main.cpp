@@ -37,13 +37,12 @@ int main(int argc, char *argv[]) {
 
 #if TRCOUNTING
     uint64_t result = 0;
+#if SECONDVERSION
+    result = GpuForward_v2(myGraph);
+#else
 #if GPU
     if(device_hint == NULL || strcmp(device_hint, "GPU") == 0){
-#if SECONDVERSION
-        result = GpuForward_v2(myGraph);
-#else
-        result = GpuForward(edges, info_pair.first, info_pair.second);
-#endif
+       result = GpuForward(edges, info_pair.first, info_pair.second);
     }
     else if (strcmp(device_hint, "CPU") == 0) {
         result = CpuForward(edges, info_pair.first, info_pair.second);
@@ -51,9 +50,10 @@ int main(int argc, char *argv[]) {
         result = GpuForward(edges, info_pair.first, info_pair.second);
     }
 #else
-    result = CpuForward(edges, info_pair.first, info_pair.second);
+	result = CpuForward(edges, info_pair.first, info_pair.second);
 #endif
     free(edges);
+#endif
 #if TIMECOUNTING    
     t->Done("Compute number of triangles");
 #endif
