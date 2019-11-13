@@ -51,7 +51,7 @@ __global__ void UnzipEdges(int m, int* edges, int* unzipped_edges) {
   }
 }
 
-__global__ void CalculateTriangles_v2(int n, int* dev_neighbor, int64_t* dev_offset, uint64_t* results,int deviceCount = 1, int deviceIdx = 0) {
+__global__ void CalculateTriangles_v2(int n, int* dev_neighbor, int64_t* dev_offset, int* dev_length, uint64_t* results,int deviceCount = 1, int deviceIdx = 0) {
    int from =
     gridDim.x * blockDim.x * deviceIdx +
     blockDim.x * blockIdx.x +
@@ -60,12 +60,12 @@ __global__ void CalculateTriangles_v2(int n, int* dev_neighbor, int64_t* dev_off
   
   uint64_t count = 0;
   for (int i = from; i < n; i += step) {	
-    for(int u = dev_offset[i]; u <= dev_offset[i+1]-1; u++){
+    for(int u = dev_offset[i]; u <= dev_offset[i]+dev_length[i]-1; u++){
     	int j = dev_neighbor[u];
         int64_t j_it = dev_offset[j];
         int64_t i_it = dev_offset[i];
 	
- 	while(j_it <= dev_offset[j+1]-1 && i_it <= dev_offset[i+1]-1){
+ 	while(j_it <= dev_offset[j]+dev_length[j]-1 && i_it <= dev_offset[i]+dev_length[i]-1){
         int d = dev_neighbor[i_it] - dev_neighbor[j_it];
 		if ( d == 0 ){
 			count++;
@@ -225,13 +225,18 @@ uint64_t GpuForward(int* edges, int num_nodes, uint64_t num_edges) {
 uint64_t GpuForward_v2(const MyGraph& myGraph){
     int64_t* dev_offset;
     int* dev_neighbor;
+    int* dev_length;
     CUCHECK(cudaMalloc(&dev_offset, (myGraph.nodeid_max + 2) * sizeof(int64_t)));
     CUCHECK(cudaMemcpyAsync(
        dev_offset, myGraph.offset, (myGraph.nodeid_max + 2) * sizeof(int64_t), cudaMemcpyHostToDevice));
     CUCHECK(cudaDeviceSynchronize());
-    CUCHECK(cudaMalloc(&dev_neighbor, (2 * myGraph.edge_num) * sizeof(int)));
+    CUCHECK(cudaMalloc(&dev_length, (myGraph.nodeid_max + 1) * sizeof(int)));
     CUCHECK(cudaMemcpyAsync(
-       dev_neighbor, myGraph.neighboor, (2 * myGraph.edge_num) * sizeof(int), cudaMemcpyHostToDevice));
+      dev_length, myGraph.length, (myGraph.nodeid_max + 1) * sizeof(int), cudaMemcpyHostToDevice));
+    CUCHECK(cudaDeviceSynchronize());
+    CUCHECK(cudaMalloc(&dev_neighbor, ( myGraph.edge_num) * sizeof(int)));
+    CUCHECK(cudaMemcpyAsync(
+       dev_neighbor, myGraph.neighboor, ( myGraph.edge_num) * sizeof(int), cudaMemcpyHostToDevice));
     CUCHECK(cudaDeviceSynchronize());
     const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();	
     uint64_t* dev_results;
@@ -239,7 +244,7 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
           NUM_BLOCKS * NUM_THREADS * sizeof(uint64_t)));
 
     CalculateTriangles_v2<<<NUM_BLOCKS, NUM_THREADS>>>(
-        myGraph.nodeid_max + 1, dev_neighbor, dev_offset, dev_results);
+        myGraph.nodeid_max + 1, dev_neighbor, dev_offset, dev_length, dev_results);
     CUCHECK(cudaDeviceSynchronize());
     uint64_t result = SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
     return result / 6;
