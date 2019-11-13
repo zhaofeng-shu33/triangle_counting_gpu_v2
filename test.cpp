@@ -8,6 +8,13 @@
 #include <nvtc/gpu.h>
 #include <nvtc/counting_cpu.h>
 
+TEST(split, array) {
+    uint64_t arr[] = {1, 3, 5, 8, 10, 18};
+    uint64_t* out_arr;
+    get_split(arr, 6, 2, out_arr); 
+    EXPECT_EQ(out_arr[0], 0);
+    EXPECT_EQ(out_arr[1], 10);
+}
 #if GPU
 TEST(tc, io_bin) {
     int* edges;

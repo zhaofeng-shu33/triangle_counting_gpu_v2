@@ -19,7 +19,16 @@ uint64_t get_edge(std::ifstream& fin){
     }
     return edge_size / 8;
 }
-
+void get_split(uint64_t* arr, int arr_len, int split_num, uint64_t*& out_arr){
+    out_arr = new uint64_t[split_num];
+    int counter = 0;
+    uint64_t max_num = arr[arr_len - 1];
+    for(int i = 0; i < split_num; i++){
+        while(arr[counter] < i * max_num / split_num)
+            counter++;
+        out_arr[i] = arr[counter];
+    }
+}
 //! V2 allows node with zero degree
 std::pair<int, uint64_t> read_binfile_to_arclist_v2(const char* file_name, int*& arcs){
     std::ifstream fin;
