@@ -247,7 +247,7 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
         myGraph.nodeid_max + 1, dev_neighbor, dev_offset, dev_length, dev_results);
     CUCHECK(cudaDeviceSynchronize());
     uint64_t result = SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
-    return result / 6;
+    return result;
 }
 
 uint64_t MultiGpuForward(int* edges, int device_count, int num_nodes, uint64_t num_edges) {

@@ -167,24 +167,24 @@ MyGraph::MyGraph(const char* file_name){
 
 	sort_neighboor();
 
-	cout<<"Data Done."<<endl;
-	cout<<"node max: "<<nodeid_max<<endl;
-	cout<<"edge_num: "<<edge_num<<endl;
-	cout<<"offset: ";
-	for (int i=0;i<=nodeid_max;i++){
-		cout<<offset[i]<<" ";
-	}
-	cout<<endl;
-	cout<<"length: ";
-	for (int i=0;i<=nodeid_max;i++){
-		cout<<length[i]<<" ";
-	}
-	cout<<endl;
-	cout<<"neighbor: ";
-	for (int i=0;i<edge_num;i++){
-		cout<<neighboor[i]<<" ";
-	}
-	cout<<endl;
+	// cout<<"Data Done."<<endl;
+	// cout<<"node max: "<<nodeid_max<<endl;
+	// cout<<"edge_num: "<<edge_num<<endl;
+	// cout<<"offset: ";
+	// for (int i=0;i<=nodeid_max;i++){
+	// 	cout<<offset[i]<<" ";
+	// }
+	// cout<<endl;
+	// cout<<"length: ";
+	// for (int i=0;i<=nodeid_max;i++){
+	// 	cout<<length[i]<<" ";
+	// }
+	// cout<<endl;
+	// cout<<"neighbor: ";
+	// for (int i=0;i<edge_num;i++){
+	// 	cout<<neighboor[i]<<" ";
+	// }
+	// cout<<endl;
 }
 
 bool MyGraph::arc_exist(int u, int v) {

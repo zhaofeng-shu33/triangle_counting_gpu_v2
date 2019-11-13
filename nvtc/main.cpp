@@ -28,8 +28,7 @@ int main(int argc, char *argv[]) {
     int* edges;
     std::pair<int, uint64_t> info_pair;
     info_pair = read_binfile_to_arclist_v2(argv[2], edges);
-#if VERBOSE
-    t->Done("Reading Data");
+#if VERBOSE    
     std::cout << "Num of Nodes: " << info_pair.first << std::endl;
     std::cout << "Num of Edges: " << info_pair.second << std::endl;
 #endif
@@ -37,6 +36,7 @@ int main(int argc, char *argv[]) {
 
 #if TRCOUNTING
     uint64_t result = 0;
+    t->Done("Reading Data");
 #if SECONDVERSION
     result = GpuForward_v2(myGraph);
 #else
