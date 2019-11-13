@@ -114,13 +114,13 @@ __global__ void CalculateTriangles(
 }
 
 __global__ void CalculateTriangles_split(
-    int m, const int* __restrict__ edges, const int* __restrict__ nodes,
+    int m, const int* __restrict__ edges, const uint64_t* __restrict__ nodes,
     uint64_t* results, const int* __restrict__ dev_node_index, int i, int j) {
   int from =
-    gridDim.x * blockDim.x * deviceIdx +
+    gridDim.x * blockDim.x * 0 +
     blockDim.x * blockIdx.x +
     threadIdx.x;
-  int step = deviceCount * gridDim.x * blockDim.x;
+  int step = 1 * gridDim.x * blockDim.x;
   uint64_t count = 0;
 
   for (uint64_t i = from; i < m; i += step) {
@@ -290,6 +290,7 @@ uint64_t GpuForward_Split(int* edges, int num_nodes, uint64_t num_edges, int spl
   uint64_t* host_nodes;
 
   CUCHECK(cudaMalloc(&dev_nodes, (n + 1) * sizeof(uint64_t)));
+  // compute node pointers in CPU
   // copy node pointers from CPU memory to GPU memory
   CUCHECK(cudaDeviceSynchronize());
 
@@ -301,7 +302,7 @@ uint64_t GpuForward_Split(int* edges, int num_nodes, uint64_t num_edges, int spl
   cudaFuncSetCacheConfig(CalculateTriangles_split, cudaFuncCachePreferL1);
    
   // calculate split index in host_nodes which makes the split even
-  int* node_index = new split[split_num];
+  int* node_index = new int[split_num];
   int* dev_node_index;
   // TODO
   for(int i = 0; i < split_num; i++)
