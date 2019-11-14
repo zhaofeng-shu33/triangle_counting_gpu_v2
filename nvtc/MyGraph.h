@@ -10,9 +10,7 @@
 #include <algorithm>
 #include <omp.h>
 #include <chrono>
-#define BUFFERSIZE 8192
-#define BATCHSIZE BUFFERSIZE/8
-
+#include <mutex>
 using namespace std;
 
 class MyGraph{
@@ -32,9 +30,6 @@ class MyGraph{
 		// node ID -> Node degree.
 		int* degree;
 
-		// node ID -> array length starting from offset.
-		int* length;
-
 		// neighboor table starting address
 		int* neighboor;
 
@@ -44,7 +39,10 @@ class MyGraph{
 		// total number of edges
 		int64_t edge_num;
 
+		mutex* lock;
+		mutex fin_lock;
+
 	private:
-		void sort_neighboor();
+		void sort_neighboor(int* d);
 		bool inner_arc_exist(int u, int v, int* d);
 };

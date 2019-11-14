@@ -232,7 +232,7 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
     CUCHECK(cudaDeviceSynchronize());
     CUCHECK(cudaMalloc(&dev_length, (myGraph.nodeid_max + 1) * sizeof(int)));
     CUCHECK(cudaMemcpyAsync(
-      dev_length, myGraph.length, (myGraph.nodeid_max + 1) * sizeof(int), cudaMemcpyHostToDevice));
+      dev_length, myGraph.degree, (myGraph.nodeid_max + 1) * sizeof(int), cudaMemcpyHostToDevice));
     CUCHECK(cudaDeviceSynchronize());
     CUCHECK(cudaMalloc(&dev_neighbor, ( myGraph.edge_num) * sizeof(int)));
     CUCHECK(cudaMemcpyAsync(
