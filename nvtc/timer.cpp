@@ -18,10 +18,6 @@ class TimerImpl : public Timer {
     return res;
   }
 
-  virtual void Reset() {
-    last = Clock::now();
-  }
-
   typedef std::chrono::high_resolution_clock Clock;
 
  private:
