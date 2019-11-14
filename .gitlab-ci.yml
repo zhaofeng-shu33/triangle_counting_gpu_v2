@@ -7,7 +7,7 @@ build:
     - mkdir build
     - python3 graph_generator.py
     - cd build
-    - cmake3 -DCODE_COVERAGE=ON -DENABLE_TESTING=ON ..
+    - cmake3 -DCODE_COVERAGE=ON -DENABLE_TESTING=ON -DCODEGPU=ON ..
     - make -j5
     - srun -t 500 --gres=gpu:1 test_alg
     - lcov --directory . --capture --output-file coverage.info
