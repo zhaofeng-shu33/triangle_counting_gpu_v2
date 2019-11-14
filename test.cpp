@@ -28,6 +28,25 @@ TEST(swap, array) {
     EXPECT_EQ(arr[5], 6);
  
 }
+
+TEST(io, swap) {
+    int* arcs;
+    std::pair<int, uint64_t> info_pair = read_binfile_to_arclist_v2("test_complete_3.bin", arcs);
+    swap_array(arcs, info_pair.second);
+    EXPECT_EQ(arcs[0], 0);
+    EXPECT_EQ(arcs[1], 0);
+    EXPECT_EQ(arcs[2], 1);
+    EXPECT_EQ(arcs[3], 0);
+    EXPECT_EQ(arcs[4], 1);
+    EXPECT_EQ(arcs[5], 2);
+    EXPECT_EQ(arcs[6], 1);
+    EXPECT_EQ(arcs[7], 2);
+    EXPECT_EQ(arcs[8], 2);
+    EXPECT_EQ(arcs[9], 3);
+    EXPECT_EQ(arcs[10],3);
+    EXPECT_EQ(arcs[11], 3);
+}
+
 #if GPU
 TEST(tc, io_bin) {
     int* edges;
