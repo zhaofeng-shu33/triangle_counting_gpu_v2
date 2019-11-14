@@ -30,6 +30,16 @@ void get_split(uint64_t* arr, int arr_len, int split_num, uint64_t*& out_arr){
     }
     out_arr[split_num] = max_num;
 }
+// swap_array(arr = {1,2,3,4,5,6},3) -> arr = {1,3,5,2,4,6}
+void swap_array(int*& arr, uint64_t arr_len_2){
+   uint64_t empty_pos = 1;
+   for(uint64_t i = 1; i < arr_len_2; i++){
+     std::swap(arr[empty_pos], arr[2 * i]);
+     empty_pos++;
+   }
+   std::sort(arr + arr_len_2, arr + 2 * arr_len_2);
+}
+
 //! V2 allows node with zero degree
 std::pair<int, uint64_t> read_binfile_to_arclist_v2(const char* file_name, int*& arcs){
     std::ifstream fin;
