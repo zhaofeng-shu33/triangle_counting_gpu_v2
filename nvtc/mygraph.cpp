@@ -88,7 +88,10 @@ MyGraph::MyGraph(const char* file_name){
 		for (int j = 0; j < BATCHSIZE; j++) {
 			x = *(u + 2 * j);
 			y = *(u + 2 * j + 1);
-			x<y?_temp[x]++:_temp[y]++;
+			if(x<y)
+				_temp[x]++;
+			if(x>y)
+				_temp[y]++;
 		}
 		counter = counter + BATCHSIZE;
 	}
@@ -99,7 +102,10 @@ MyGraph::MyGraph(const char* file_name){
 		v = reinterpret_cast<int*>(v_array);
 		x = *u;
 		y = *v;
-		x<y?_temp[x]++:_temp[y]++;
+		if(x<y)
+			_temp[x]++;
+		if(x>y)
+			_temp[y]++;
 	}
 
 	offset[0] = 0;
@@ -145,7 +151,7 @@ MyGraph::MyGraph(const char* file_name){
 		y = *v;
 		if(x<y)
 		neighboor[offset[x] + degree[x]++] = y;
-		else
+		if(x>y)
 		neighboor[offset[y] + degree[y]++] = x;
 	}
 
@@ -156,12 +162,12 @@ MyGraph::MyGraph(const char* file_name){
 		int m,n;
 		if (_temp[i]>1){
 			for(m=0;m<_temp[i];){
-				if(neighboor[offset[i]+m]==i){
-					degree[i]--;
-					neighboor[offset[i]+m] = INTMAX;
-					m++;
-					continue;
-				}
+				// if(neighboor[offset[i]+m]==i){
+				// 	degree[i]--;
+				// 	neighboor[offset[i]+m] = INTMAX;
+				// 	m++;
+				// 	continue;
+				// }
 				for(n=m+1;n<_temp[i] && neighboor[offset[i]+m]==neighboor[offset[i]+n];n++){
 					degree[i]--;
 					neighboor[offset[i]+n] = INTMAX;
@@ -217,7 +223,7 @@ void loadbatch(MyGraph* G,std::ifstream* fin, int* _temp, bool* state){
 			G->neighboor[G->offset[x] + G->degree[x]++] = y;
 			G->lock[x].unlock();
 		}
-		else{
+		if(x>y){
 			G->lock[y].lock();
 			G->neighboor[G->offset[y] + G->degree[y]++] = x;
 			G->lock[y].unlock();
