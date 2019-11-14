@@ -114,8 +114,8 @@ __global__ void CalculateTriangles(
 }
 
 __global__ void CalculateTriangles_split(
-    int m, const int* __restrict__ edges, const uint64_t* __restrict__ nodes,
-    uint64_t* results, const int* __restrict__ dev_node_index, int i, int j) {
+    int m, const int* __restrict__ edges, const int* __restrict__ edges_j, const uint64_t* __restrict__ nodes,
+    uint64_t* results, const uint64_t* __restrict__ dev_node_index, int i, int j) {
   int from =
     gridDim.x * blockDim.x * 0 +
     blockDim.x * blockIdx.x +
@@ -285,32 +285,52 @@ uint64_t GpuForward_Split(int* edges, int num_nodes, uint64_t num_edges, int spl
   uint64_t m = num_edges;
   int n = num_nodes;
 
-  int* dev_edges;
+  int* dev_edges_i, *dev_edges_j;
   uint64_t* dev_nodes;
   uint64_t* host_nodes;
 
   CUCHECK(cudaMalloc(&dev_nodes, (n + 1) * sizeof(uint64_t)));
   // compute node pointers in CPU
+  host_nodes = new uint64_t [n + 1];
+  // Calculate NodePointers
+  for (uint64_t i = 0; i <= m; i++) {
+     int prev = i > 0 ? edges[2 * i - 1] : -1;
+     int next = i < m ? edges[2 * i + 1] : n;
+     for (int j = prev + 1; j <= next; j++)
+       host_nodes[j] = i;  
+  }
   // copy node pointers from CPU memory to GPU memory
+  CUCHECK(cudaMemcpyAsync(
+      dev_nodes, host_nodes, (n + 1) * sizeof(uint64_t), cudaMemcpyHostToDevice));
   CUCHECK(cudaDeviceSynchronize());
 
   uint64_t result = 0;
-  CUCHECK(cudaMalloc(&dev_edges,  2 * sizeof(int) * (m / split_num + 1)));
+  CUCHECK(cudaMalloc(&dev_edges_i, 2 * sizeof(int) * (m / split_num + 1)));
+  CUCHECK(cudaMalloc(&dev_edges_j, 2 * sizeof(int) * (m / split_num + 1)));
   uint64_t* dev_results;
   CUCHECK(cudaMalloc(&dev_results,
 	  NUM_BLOCKS * NUM_THREADS * sizeof(uint64_t)));
   cudaFuncSetCacheConfig(CalculateTriangles_split, cudaFuncCachePreferL1);
    
   // calculate split index in host_nodes which makes the split even
-  int* node_index = new int[split_num];
-  int* dev_node_index;
+  uint64_t* node_index = new uint64_t[split_num];
+  get_split(host_nodes, n + 1, split_num, node_index);
+  uint64_t* dev_node_index;
+  CUCHECK(cudaMalloc(&dev_node_index, split_num * sizeof(uint64_t)));
+  CUCHECK(cudaMemcpy(dev_node_index, node_index, split_num * sizeof(uint64_t), cudaMemcpyHostToDevice));
   // TODO
   for(int i = 0; i < split_num; i++)
      for(int j = i; j < split_num; j++){
-          // Todo: construct dev_nodes	  
+          // Todo: construct dev_edges
+          CUCHECK(cudaMemcpyAsync(dev_edges_i, edges + 2 * node_index[i], 2 * sizeof(int) * (node_index[i+1] - node_index[i]),
+                cudaMemcpyHostToDevice));
+          CUCHECK(cudaDeviceSynchronize());
+          CUCHECK(cudaMemcpyAsync(dev_edges_j, edges + 2 * node_index[j], 2 * sizeof(int) * (node_index[j+1] - node_index[j]),
+                cudaMemcpyHostToDevice));
+          
           // node id dev_node_index[i]~dev_node_index[i+1] and dev_node_index[j]~dev_node_index[j+1]
-	  CalculateTriangles_split<<<NUM_BLOCKS, NUM_THREADS>>>(
-		m, dev_edges, dev_nodes, dev_results, dev_node_index, i, j);
+	    CalculateTriangles_split<<<NUM_BLOCKS, NUM_THREADS>>>(
+		m, dev_edges_i, dev_edges_j, dev_nodes, dev_results, dev_node_index, i, j);
 	    CUCHECK(cudaDeviceSynchronize());
 	    // Reduce
 	  result += SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
@@ -319,7 +339,8 @@ uint64_t GpuForward_Split(int* edges, int num_nodes, uint64_t num_edges, int spl
   timer->Done("Calculate triangles used time: ");
 #endif
   CUCHECK(cudaFree(dev_results));
-  CUCHECK(cudaFree(dev_edges));
+  CUCHECK(cudaFree(dev_edges_i));
+  CUCHECK(cudaFree(dev_edges_j));
   CUCHECK(cudaFree(dev_nodes));
 #if TIMECOUNTING
   delete timer;
