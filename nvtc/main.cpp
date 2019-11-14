@@ -36,7 +36,9 @@ int main(int argc, char *argv[]) {
 
 #if TRCOUNTING
     uint64_t result = 0;
+#if TIMECOUNTING
     t->Done("Reading Data");
+#endif
 #if SECONDVERSION
     result = GpuForward_v2(myGraph);
 #else
