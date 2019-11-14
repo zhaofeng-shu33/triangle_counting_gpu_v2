@@ -15,7 +15,6 @@
 
 using namespace std;
 
-
 MyGraph::MyGraph(const char* file_name){
 	// Temporal variables
     std::ifstream fin;
@@ -33,6 +32,7 @@ MyGraph::MyGraph(const char* file_name){
 	fin.seekg(0, fin.beg);
 	
 	//Round 1, Get max id
+	cout << "Round 1, Get max id" << endl;
 	while (counter + BATCHSIZE < edge_num) {
 		fin.read(buffer, BUFFERSIZE);
 		u = reinterpret_cast<int*>(buffer);
@@ -63,15 +63,14 @@ MyGraph::MyGraph(const char* file_name){
 		}
 	}
 	nodeid_max = node_max;
-	//cout << "Max Node ID in dataset: " << node_max << endl;
-	
+
 	// Call for mem
 	offset = new int64_t[nodeid_max +2];
 	degree = new int[nodeid_max + 1];
-	neighboor = new int[2 * edge_num + 1];
-	int* _temp = new int[nodeid_max + 1];
+	length = new int[nodeid_max + 1];
 
 	//Round 2, Get node degree
+	cout << "Round 2, Get node degree" << endl;
 	fin.seekg(0, fin.beg);
 	counter = 0;
 	while (counter + BATCHSIZE < edge_num) {
@@ -82,6 +81,10 @@ MyGraph::MyGraph(const char* file_name){
 			y = *(u + 2 * j + 1);
 			degree[x]++;
 			degree[y]++;
+			if(x<y)
+				length[x]++;
+			else
+				length[y]++;
 		}
 		counter = counter + BATCHSIZE;
 	}
@@ -94,27 +97,47 @@ MyGraph::MyGraph(const char* file_name){
 		y = *v;
 		degree[x]++;
 		degree[y]++;
+		if(x<y)
+			length[x]++;
+		else
+			length[y]++;
 	}
-
+	
 	offset[0] = 0;
 	for (int64_t i = 1; i <= nodeid_max+1; i++) {
-		offset[i] = offset[i - 1] + degree[i - 1];
+		offset[i] = offset[i - 1] + length[i - 1];
 	}
 
+	// Call for mem
+	neighboor = new int[edge_num];
+	int* _pointer = new int[nodeid_max + 1];
+
 	//Round 3, Record neighboors
+	cout << "Round 3, Record neighboors" << endl;
 	fin.seekg(0, fin.beg);
 	counter = 0;
 	while (counter + BATCHSIZE < edge_num) {
 		fin.read(buffer, BUFFERSIZE);
 		u = reinterpret_cast<int*>(buffer);
-//#pragma omp parallel for 
 		for (int j = 0; j < BATCHSIZE; j++) {
 			x = *(u + 2 * j);
 			y = *(u + 2 * j + 1);
-			neighboor[offset[x] + _temp[x]++] = y;
-			neighboor[offset[y] + _temp[y]++] = x;
-			//neighboor[offset[*(u + 2 * j)] + _temp[*(u + 2 * j)]++] = *(u + 2 * j + 1);
-			//neighboor[offset[*(u + 2 * j + 1)] + _temp[*(u + 2 * j + 1)]++] = *(u + 2 * j);
+			if (x!=y && !inner_arc_exist(x,y,_pointer)){
+				if(x<y)
+					neighboor[offset[x] + _pointer[x]++] = y;
+				else
+					neighboor[offset[y] + _pointer[y]++] = x;
+			}
+			else
+			{
+				degree[x]--;
+				degree[y]--;
+				if(x<y)
+					length[x]--;
+				else
+					length[y]--;
+			}
+				
 		}
 		counter = counter + BATCHSIZE;
 	}
@@ -125,18 +148,43 @@ MyGraph::MyGraph(const char* file_name){
 		v = reinterpret_cast<int*>(v_array);
 		x = *u;
 		y = *v;
-		neighboor[offset[x] + _temp[x]++] = y;
-		neighboor[offset[y] + _temp[y]++] = x;
+		if (x!=y && !inner_arc_exist(x,y,_pointer)){
+				if(x<y)
+					neighboor[offset[x] + _pointer[x]++] = y;
+				else
+					neighboor[offset[y] + _pointer[y]++] = x;
+			}
+			else
+			{
+				degree[x]--;
+				degree[y]--;
+				if(x<y)
+					length[x]--;
+				else
+					length[y]--;
+			}
 	}
-	//for (int64_t i = 0; i <= nodeid_max; i++) {
-	//	if (degree[i] != _temp[i]) {
-	//		cout << "error at " << i << endl;
-	//		break;
-	//	}
-			
-	//}
 
 	sort_neighboor();
+
+	// cout<<"Data Done."<<endl;
+	// cout<<"node max: "<<nodeid_max<<endl;
+	// cout<<"edge_num: "<<edge_num<<endl;
+	// cout<<"offset: ";
+	// for (int i=0;i<=nodeid_max;i++){
+	// 	cout<<offset[i]<<" ";
+	// }
+	// cout<<endl;
+	// cout<<"length: ";
+	// for (int i=0;i<=nodeid_max;i++){
+	// 	cout<<length[i]<<" ";
+	// }
+	// cout<<endl;
+	// cout<<"neighbor: ";
+	// for (int i=0;i<edge_num;i++){
+	// 	cout<<neighboor[i]<<" ";
+	// }
+	// cout<<endl;
 }
 
 bool MyGraph::arc_exist(int u, int v) {
@@ -157,10 +205,24 @@ bool MyGraph::arc_exist(int u, int v) {
 	return false;
 }
 
+bool MyGraph::inner_arc_exist(int u, int v, int* d) {
+	for (int i = 0; i < d[u]; i++) {
+		if (neighboor[offset[u] + i] == v) {
+			return true;
+		}
+	}
+	for (int i = 0; i < d[v]; i++) {
+		if (neighboor[offset[v] + i] == u) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void MyGraph::sort_neighboor() {
 #pragma omp parallel for
 	for (int64_t i = 0; i <= nodeid_max; i++) {
-		sort(neighboor + offset[i], neighboor + offset[i + 1]);
+		sort(neighboor + offset[i], neighboor + offset[i] + length[i]);
 	}
 }
 
@@ -174,5 +236,5 @@ bool MyGraph::arc_exist_sorted(int u, int v) {
 		x = v;
 		y = u;
 	}
-	return binary_search(neighboor + offset[x], neighboor + offset[x + 1], y);
+	return binary_search(neighboor + offset[x], neighboor + offset[x] + degree[x], y);
 }

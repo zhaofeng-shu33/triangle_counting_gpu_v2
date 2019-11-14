@@ -32,6 +32,9 @@ class MyGraph{
 		// node ID -> Node degree.
 		int* degree;
 
+		// node ID -> array length starting from offset.
+		int* length;
+
 		// neighboor table starting address
 		int* neighboor;
 
@@ -43,4 +46,5 @@ class MyGraph{
 
 	private:
 		void sort_neighboor();
+		bool inner_arc_exist(int u, int v, int* d);
 };
