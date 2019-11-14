@@ -301,7 +301,7 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
 int GetSplitNum(int num_nodes, uint64_t num_edges) {
     uint64_t mem = (uint64_t)GlobalMemory(); // in Byte
     mem -= (uint64_t)num_nodes * 8; // uint64_t
-    return (2 + 16 * num_edges / mem);
+    return (1 + 16 * num_edges / mem);
 }
 
 uint64_t GpuForwardSplit(int* edges, int num_nodes, uint64_t num_edges, int split_num) {
