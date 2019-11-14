@@ -184,25 +184,6 @@ size_t GlobalMemory() {
   return prop.totalGlobalMem;
 }
 
-Edges RemoveBackwardEdgesCPU(const Edges& unordered_edges) {
-  int n = NumVertices(unordered_edges);
-  int m = unordered_edges.size();
-
-  vector<int> deg(n);
-  for (int i = 0; i < m; ++i)
-    ++deg[unordered_edges[i].first];
-
-  vector< pair<int, int> > edges;
-  edges.reserve(m / 2);
-  for (int i = 0; i < m; ++i) {
-    int s = unordered_edges[i].first, t = unordered_edges[i].second;
-    if (deg[s] > deg[t] || (deg[s] == deg[t] && s > t))
-      edges.push_back(make_pair(s, t));
-  }
-
-  return edges;
-}
-
 uint64_t MultiGPUCalculateTriangles(
     int n, int m, int* dev_edges, int* dev_nodes, int device_count) {
   vector<int*> multi_dev_edges(device_count);
