@@ -123,8 +123,8 @@ __global__ void CalculateTriangles_split(
   int step = 1 * gridDim.x * blockDim.x;
   uint64_t count = 0;
   // itering over edges_i
-  for (uint64_t i = from; i < dev_node_index[i+1] - dev_node_index[i]; i += step) {
-    int u = edges_i[2 * i], v = edges_i[ 2 * i + 1];
+  for (uint64_t r = from; r < dev_node_index[i+1] - dev_node_index[i]; r += step) {
+    int u = edges_i[2 * r], v = edges_i[ 2 * r + 1];
     if(nodes[u] >= dev_node_index[i+1] || nodes[u + 1] < dev_node_index[i] || nodes[v] >= dev_node_index[j + 1] || nodes[v + 1] < dev_node_index[j])
         continue;
     uint64_t u_it = nodes[u] - dev_node_index[i];
@@ -335,7 +335,7 @@ uint64_t GpuForwardSplit(int* edges, int num_nodes, uint64_t num_edges, int spli
           CUCHECK(cudaDeviceSynchronize());
           CUCHECK(cudaMemcpyAsync(dev_edges_j, edges + 2 * node_index[j], 2 * sizeof(int) * (node_index[j+1] - node_index[j]),
                 cudaMemcpyHostToDevice));
-          
+          CUCHECK(cudaDeviceSynchronize()); 
           // node id dev_node_index[i]~dev_node_index[i+1] and dev_node_index[j]~dev_node_index[j+1]
 	    CalculateTriangles_split<<<NUM_BLOCKS, NUM_THREADS>>>(
 		m, dev_edges_i, dev_edges_j, dev_nodes, dev_results, dev_node_index, i, j);
