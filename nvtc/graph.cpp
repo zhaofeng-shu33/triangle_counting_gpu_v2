@@ -19,35 +19,9 @@ uint64_t get_edge(std::ifstream& fin){
     }
     return edge_size / 8;
 }
-uint64_t get_split(uint64_t* arr, int arr_len, int split_num, uint64_t*& out_arr){
-    out_arr = new uint64_t[split_num + 1];
-    int counter = 0;
-    uint64_t max_num = arr[arr_len - 1];
-    for(int i = 0; i < split_num; i++){
-        while(arr[counter] < i * max_num / split_num)
-            counter++;
-        out_arr[i] = arr[counter];
-    }
-    out_arr[split_num] = max_num;
-    max_num = out_arr[1] - out_arr[0];
-    for(int i = 1; i < split_num; i++){
-        if(max_num < out_arr[i + 1] - out_arr[i])
-            max_num = out_arr[i + 1] - out_arr[i];
-    }
-    return max_num;
-}
-// swap_array(arr = {1,2,3,4,5,6},3) -> arr = {1,3,5,2,4,6}
-void swap_array(int*& arr, uint64_t arr_len_2){
-   uint64_t empty_pos = 1;
-   for(uint64_t i = 1; i < arr_len_2; i++){
-     std::swap(arr[empty_pos], arr[2 * i]);
-     empty_pos++;
-   }
-   std::sort(arr + arr_len_2, arr + 2 * arr_len_2);
-}
 
 //! V2 allows node with zero degree
-std::pair<int, uint64_t> read_binfile_to_arclist(const char* file_name, int*& arcs){
+std::pair<int, uint64_t> read_binfile_to_arclist_v2(const char* file_name, int*& arcs){
     std::ifstream fin;
     fin.open(file_name, std::ifstream::binary | std::ifstream::in);
     uint64_t file_size = get_edge(fin);
@@ -99,3 +73,65 @@ std::pair<int, uint64_t> read_binfile_to_arclist(const char* file_name, int*& ar
     return std::make_pair(node_num + 1, edges);
 }
 
+
+void WriteEdgesToFile(const Edges& edges, const char* filename) {
+  ofstream out(filename, ios::binary);
+  int m = edges.size();
+  out.write((char*)&m, sizeof(int));
+  out.write((char*)edges.data(), 2 * m * sizeof(int));
+}
+
+int NumVertices(const Edges& edges) {
+  int num_vertices = 0;
+  for (const pair<int, int>& edge : edges)
+    num_vertices = max(num_vertices, 1 + max(edge.first, edge.second));
+  return num_vertices;
+}
+
+void RemoveDuplicateEdges(Edges* edges) {
+  sort(edges->begin(), edges->end());
+  edges->erase(unique(edges->begin(), edges->end()), edges->end());
+}
+
+void RemoveSelfLoops(Edges* edges) {
+  for (int i = 0; i < edges->size(); ++i) {
+    if ((*edges)[i].first == (*edges)[i].second) {
+      edges->at(i) = edges->back();
+      edges->pop_back();
+      --i;
+    }
+  }
+}
+
+void MakeUndirected(Edges* edges) {
+  const size_t n = edges->size();
+  for (int i = 0; i < n; ++i) {
+    pair<int, int> edge = (*edges)[i];
+    swap(edge.first, edge.second);
+    edges->push_back(edge);
+  }  
+}
+
+void PermuteEdges(Edges* edges) {
+  random_shuffle(edges->begin(), edges->end());
+}
+
+void PermuteVertices(Edges* edges) {
+  vector<int> p(NumVertices(*edges));
+  for (int i = 0; i < p.size(); ++i)
+    p[i] = i;
+  random_shuffle(p.begin(), p.end());
+  for (pair<int, int>& edge : *edges) {
+    edge.first = p[edge.first];
+    edge.second = p[edge.second];
+  }
+}
+
+AdjList EdgesToAdjList(const Edges& edges) {
+  // Sorting edges with std::sort to optimize memory access pattern when
+  // creating graph gives less than 20% speedup.
+  AdjList graph(NumVertices(edges));
+  for (const pair<int, int>& edge : edges)
+    graph[edge.first].push_back(edge.second);
+  return graph;
+}

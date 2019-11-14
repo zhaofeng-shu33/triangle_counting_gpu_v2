@@ -1,5 +1,3 @@
-[![codecov](https://codecov.io/gh/zhaofeng-shu33/triangle_counting_gpu/branch/master/graph/badge.svg)](https://codecov.io/gh/zhaofeng-shu33/triangle_counting_gpu)
-
 Triangles Counting in CUDA GPU
 =========
 

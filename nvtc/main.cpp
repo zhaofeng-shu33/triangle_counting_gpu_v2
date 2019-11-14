@@ -20,28 +20,29 @@ int main(int argc, char *argv[]) {
 #if TIMECOUNTING 
     unique_ptr<Timer> t(Timer::NewTimer());
 #endif
+#if SECONDVERSION
+    MyGraph myGraph(argv[2]);
+#else    
     const char* io_hint = std::getenv("DATAIO");
     const char* device_hint = std::getenv("DEVICEHINT");
     int* edges;
     std::pair<int, uint64_t> info_pair;
-    info_pair = read_binfile_to_arclist(argv[2], edges);
+    info_pair = read_binfile_to_arclist_v2(argv[2], edges);
 #if VERBOSE    
     std::cout << "Num of Nodes: " << info_pair.first << std::endl;
     std::cout << "Num of Edges: " << info_pair.second << std::endl;
 #endif
+#endif
 
 #if TRCOUNTING
     uint64_t result = 0;
-#if TIMECOUNTING
     t->Done("Reading Data");
-#endif
+#if SECONDVERSION
+    result = GpuForward_v2(myGraph);
+#else
 #if GPU
     if(device_hint == NULL || strcmp(device_hint, "GPU") == 0){
        result = GpuForward(edges, info_pair.first, info_pair.second);
-    }
-    else if (strcmp(device_hint, "GPUSPLIT") == 0) {
-        int split_num = GetSplitNum(info_pair.first, info_pair.second); 
-        result = GpuForwardSplit(edges, info_pair.first, info_pair.second, split_num); 
     }
     else if (strcmp(device_hint, "CPU") == 0) {
         result = CpuForward(edges, info_pair.first, info_pair.second);
@@ -52,6 +53,7 @@ int main(int argc, char *argv[]) {
 	result = CpuForward(edges, info_pair.first, info_pair.second);
 #endif
     free(edges);
+#endif
 #if TIMECOUNTING    
     t->Done("Compute number of triangles");
 #endif

@@ -28,7 +28,5 @@ inline void NormalizeEdges(Edges* edges) {
 
 AdjList EdgesToAdjList(const Edges& edges);
 
-std::pair<int, uint64_t> read_binfile_to_arclist(const char* file_name, int*& arcs);
-uint64_t get_split(uint64_t* arr, int arr_len, int split_num, uint64_t*& out_arr);
-void swap_array(int*& arr, uint64_t arr_len_2);
+std::pair<int, uint64_t> read_binfile_to_arclist_v2(const char* file_name, int*& arcs);
 #endif

@@ -10,6 +10,8 @@ class Timer {
   // constructor and prints it with label to stderr.
   virtual int Done(const char* label) = 0;
 
+  virtual void Reset() = 0;
+
   static Timer* NewTimer();
 };
 
