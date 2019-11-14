@@ -278,7 +278,7 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
     return result / 6;
 }
 
-uint64_t GpuForward_Split(int* edges, int num_nodes, uint64_t num_edges, int split_num = 2) {
+uint64_t GpuForwardSplit(int* edges, int num_nodes, uint64_t num_edges, int split_num) {
 #if TIMECOUNTING
   Timer* timer = Timer::NewTimer();
 #endif
@@ -316,11 +316,11 @@ uint64_t GpuForward_Split(int* edges, int num_nodes, uint64_t num_edges, int spl
   cudaFuncSetCacheConfig(CalculateTriangles_split, cudaFuncCachePreferL1);
    
   // calculate split index in host_nodes which makes the split even
-  uint64_t* node_index = new uint64_t[split_num];
+  uint64_t* node_index = new uint64_t[split_num + 1];
   get_split(host_nodes, n + 1, split_num, node_index);
   uint64_t* dev_node_index;
-  CUCHECK(cudaMalloc(&dev_node_index, split_num * sizeof(uint64_t)));
-  CUCHECK(cudaMemcpy(dev_node_index, node_index, split_num * sizeof(uint64_t), cudaMemcpyHostToDevice));
+  CUCHECK(cudaMalloc(&dev_node_index, (split_num + 1) * sizeof(uint64_t)));
+  CUCHECK(cudaMemcpy(dev_node_index, node_index, (split_num + 1)* sizeof(uint64_t), cudaMemcpyHostToDevice));
   // TODO
   for(int i = 0; i < split_num; i++)
      for(int j = i; j < split_num; j++){
@@ -349,6 +349,7 @@ uint64_t GpuForward_Split(int* edges, int num_nodes, uint64_t num_edges, int spl
   delete timer;
 #endif
   delete node_index;
+  free(host_nodes);
   return result;
 }
 
