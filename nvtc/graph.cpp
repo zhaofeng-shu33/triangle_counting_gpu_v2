@@ -47,7 +47,7 @@ void swap_array(int*& arr, uint64_t arr_len_2){
 }
 
 //! V2 allows node with zero degree
-std::pair<int, uint64_t> read_binfile_to_arclist_v2(const char* file_name, int*& arcs){
+std::pair<int, uint64_t> read_binfile_to_arclist(const char* file_name, int*& arcs){
     std::ifstream fin;
     fin.open(file_name, std::ifstream::binary | std::ifstream::in);
     uint64_t file_size = get_edge(fin);

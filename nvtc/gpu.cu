@@ -11,7 +11,6 @@
 #include <iostream>
 #include <vector>
 
-#include "MyGraph.h"
 using namespace std;
 
 #define NUM_THREADS 64

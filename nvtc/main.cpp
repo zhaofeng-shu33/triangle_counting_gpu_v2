@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     const char* device_hint = std::getenv("DEVICEHINT");
     int* edges;
     std::pair<int, uint64_t> info_pair;
-    info_pair = read_binfile_to_arclist_v2(argv[2], edges);
+    info_pair = read_binfile_to_arclist(argv[2], edges);
 #if VERBOSE    
     std::cout << "Num of Nodes: " << info_pair.first << std::endl;
     std::cout << "Num of Edges: " << info_pair.second << std::endl;
