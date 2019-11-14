@@ -79,6 +79,7 @@ TEST(split, io_nvgraph) {
     EXPECT_EQ(trcount, 3);
     free(edges);
 }
+
 TEST(split, io_complete_4) {
     int* edges;
     std::pair<int, uint64_t> info_pair = read_binfile_to_arclist(
@@ -88,19 +89,6 @@ TEST(split, io_complete_4) {
     EXPECT_EQ(trcount, 4);
     free(edges);
 }
-#if SECONDVERSION
-TEST(tcv2, io_bin) {
-    MyGraph myGraph("test_io.bin");
-    uint64_t tcount = GpuForward_v2(myGraph);
-    EXPECT_EQ(tcount, 1);
-}
-
-TEST(tcv2, io_nvgraph) {
-    MyGraph myGraph("test_io_nvgraph.bin");
-    uint64_t tcount = GpuForward_v2(myGraph);
-    EXPECT_EQ(tcount, 3);
-}
-#endif
 #endif
 
 TEST(cpu, io_bin) {
