@@ -114,7 +114,7 @@ __global__ void CalculateTriangles(
 }
 
 __global__ void CalculateTriangles_split(
-    int m, const int* __restrict__ edges, const int* __restrict__ edges_j, const uint64_t* __restrict__ nodes,
+    int m, const int* __restrict__ edges_i, const int* __restrict__ edges_j, const uint64_t* __restrict__ nodes,
     uint64_t* results, const uint64_t* __restrict__ dev_node_index, int i, int j) {
   int from =
     gridDim.x * blockDim.x * 0 +
@@ -122,20 +122,23 @@ __global__ void CalculateTriangles_split(
     threadIdx.x;
   int step = 1 * gridDim.x * blockDim.x;
   uint64_t count = 0;
-
-  for (uint64_t i = from; i < m; i += step) {
-    int u = edges[i], v = edges[m + i];
-    
-    uint64_t u_it = nodes[u], u_end = nodes[u + 1];
-    uint64_t v_it = nodes[v], v_end = nodes[v + 1];
+  // itering over edges_i
+  for (uint64_t i = from; i < dev_node_index[i+1] - dev_node_index[i]; i += step) {
+    int u = edges_i[2 * i], v = edges_i[ 2 * i + 1];
+    if(nodes[u] >= dev_node_index[i+1] || nodes[u + 1] < dev_node_index[i] || nodes[v] >= dev_node_index[j + 1] || nodes[v + 1] < dev_node_index[j])
+        continue;
+    uint64_t u_it = nodes[u] - dev_node_index[i];
+    uint64_t u_end = nodes[u + 1] - dev_node_index[i];
+    uint64_t v_it = nodes[v] - dev_node_index[j];
+    uint64_t v_end = nodes[v + 1] - dev_node_index[j];
     // if u_it or v_it not in edges, continue the loop
-    int a = edges[u_it], b = edges[v_it];
+    int a = edges_i[u_it], b = edges_j[v_it];
     while (u_it < u_end && v_it < v_end) {
       int d = a - b;
       if (d <= 0)
-        a = edges[++u_it];
+        a = edges_i[++u_it];
       if (d >= 0)
-        b = edges[++v_it];
+        b = edges_j[++v_it];
       if (d == 0)
         ++count;
     }
