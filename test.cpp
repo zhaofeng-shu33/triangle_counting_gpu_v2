@@ -31,7 +31,7 @@ TEST(swap, array) {
 
 TEST(io, swap) {
     int* arcs;
-    std::pair<int, uint64_t> info_pair = read_binfile_to_arclist_v2("test_complete_3.bin", arcs);
+    std::pair<int, uint64_t> info_pair = read_binfile_to_arclist_v2("test_complete_4.bin", arcs);
     swap_array(arcs, info_pair.second);
     EXPECT_EQ(arcs[0], 0);
     EXPECT_EQ(arcs[1], 0);
@@ -73,7 +73,13 @@ TEST(split, io_nvgraph) {
     EXPECT_EQ(trcount, 3); 
     free(edges);
 }
-
+TEST(split, io_complete_4) {
+    int* edges;
+    std::pair<int, uint64_t> info_pair = read_binfile_to_arclist_v2("test_complete_4.bin", edges);
+    uint64_t trcount = GpuForwardSplit(edges, info_pair.first, info_pair.second, 3);
+    EXPECT_EQ(trcount, 4); 
+    free(edges);
+}
 #if SECONDVERSION
 TEST(tcv2, io_bin) {
     MyGraph myGraph("test_io.bin");
