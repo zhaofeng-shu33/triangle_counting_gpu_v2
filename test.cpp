@@ -18,6 +18,10 @@ TEST(split, array) {
     EXPECT_EQ(out_arr[2], 18);
 }
 
+TEST(mem, split_num) {
+   int split_num = GetSplitNum(268435456, 3973862397); 
+   EXPECT_EQ(split_num, 5);
+}
 TEST(swap, array) {
     int arr_static[] = {1,2,3,4,5,6};
     int* arr = arr_static;
