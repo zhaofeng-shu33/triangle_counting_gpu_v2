@@ -1,0 +1,8 @@
+os: linux
+dist: xenial
+language: cpp
+install:
+  - pip install --user cpplint
+script:
+  - cpplint *.cpp nvtc/*
+
