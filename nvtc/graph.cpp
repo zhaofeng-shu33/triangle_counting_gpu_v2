@@ -19,7 +19,7 @@ uint64_t get_edge(std::ifstream& fin){
     }
     return edge_size / 8;
 }
-void get_split(uint64_t* arr, int arr_len, int split_num, uint64_t*& out_arr){
+uint64_t get_split(uint64_t* arr, int arr_len, int split_num, uint64_t*& out_arr){
     out_arr = new uint64_t[split_num + 1];
     int counter = 0;
     uint64_t max_num = arr[arr_len - 1];
@@ -29,6 +29,12 @@ void get_split(uint64_t* arr, int arr_len, int split_num, uint64_t*& out_arr){
         out_arr[i] = arr[counter];
     }
     out_arr[split_num] = max_num;
+    max_num = out_arr[1] - out_arr[0];
+    for(int i = 1; i < split_num; i++){
+        if(max_num < out_arr[i + 1] - out_arr[i])
+            max_num = out_arr[i + 1] - out_arr[i];
+    }
+    return max_num;
 }
 // swap_array(arr = {1,2,3,4,5,6},3) -> arr = {1,3,5,2,4,6}
 void swap_array(int*& arr, uint64_t arr_len_2){

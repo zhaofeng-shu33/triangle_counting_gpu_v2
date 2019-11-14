@@ -328,17 +328,18 @@ uint64_t GpuForwardSplit(int* edges, int num_nodes, uint64_t num_edges, int spli
   CUCHECK(cudaDeviceSynchronize());
 
   uint64_t result = 0;
-  CUCHECK(cudaMalloc(&dev_edges, 2 * sizeof(int) * (m / split_num + 1)));
-  CUCHECK(cudaMalloc(&dev_edges_i, sizeof(int) * (m / split_num + 1)));
-  CUCHECK(cudaMalloc(&dev_edges_j, sizeof(int) * (m / split_num + 1)));
+   
+  // calculate split index in host_nodes which makes the split even
+  uint64_t* node_index = new uint64_t[split_num + 1];
+  uint64_t max_len = get_split(host_nodes, n + 1, split_num, node_index);
+  CUCHECK(cudaMalloc(&dev_edges, 2 * sizeof(int) * max_len));
+  CUCHECK(cudaMalloc(&dev_edges_i, sizeof(int) * max_len));
+  CUCHECK(cudaMalloc(&dev_edges_j, sizeof(int) * max_len));
   uint64_t* dev_results;
   CUCHECK(cudaMalloc(&dev_results,
 	  NUM_BLOCKS * NUM_THREADS * sizeof(uint64_t)));
   cudaFuncSetCacheConfig(CalculateTriangleSplit, cudaFuncCachePreferL1);
-   
-  // calculate split index in host_nodes which makes the split even
-  uint64_t* node_index = new uint64_t[split_num + 1];
-  get_split(host_nodes, n + 1, split_num, node_index);
+
   uint64_t* dev_node_index;
   CUCHECK(cudaMalloc(&dev_node_index, (split_num + 1) * sizeof(uint64_t)));
   CUCHECK(cudaMemcpy(dev_node_index, node_index, (split_num + 1)* sizeof(uint64_t), cudaMemcpyHostToDevice));

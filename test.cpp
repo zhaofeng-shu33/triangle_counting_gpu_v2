@@ -11,11 +11,13 @@
 TEST(split, array) {
     uint64_t arr[] = {0, 1, 3, 5, 8, 10, 18};
     uint64_t* out_arr;
-    get_split(arr, 7, 2, out_arr); 
+    uint64_t max_num = get_split(arr, 7, 2, out_arr); 
+    EXPECT_EQ(max_num, 10);
     EXPECT_EQ(out_arr[0], 0);
     EXPECT_EQ(out_arr[1], 10);
     EXPECT_EQ(out_arr[2], 18);
 }
+
 TEST(swap, array) {
     int arr_static[] = {1,2,3,4,5,6};
     int* arr = arr_static;
