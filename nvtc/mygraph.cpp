@@ -20,7 +20,7 @@
 using namespace std;
 
 void foo(){return;};
-void loadbatch(MyGraph* G,std::ifstream* fin, int* _temp, bool* state);
+void loadbatch(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state);
 
 MyGraph::MyGraph(const char* file_name){
 	// Temporal variables
@@ -75,7 +75,7 @@ MyGraph::MyGraph(const char* file_name){
 	offset = new int64_t[nodeid_max +2];
 	degree = new int[nodeid_max + 1];
 	neighboor = new int[edge_num];
-	lock = new mutex[nodeid_max + 1];
+	mutex* lock = new mutex[nodeid_max + 1];
 	int* _temp = new int[nodeid_max + 1];
 
 	//Round 2, Get node degree
@@ -128,7 +128,7 @@ MyGraph::MyGraph(const char* file_name){
 			if (ths[i]->joinable())
 				ths[i]->join();
 			ths[i]->~thread();
-			ths[i] = new thread(loadbatch,this,&fin,_temp,thread_state+i);
+			ths[i] = new thread(loadbatch,this,&fin,_temp,lock,thread_state+i);
 			counter = counter + BATCHSIZE;
 		}
 		i = (i+1)%16;	
@@ -155,6 +155,15 @@ MyGraph::MyGraph(const char* file_name){
 		neighboor[offset[y] + degree[y]++] = x;
 	}
 
+	delete [] lock;
+	neighboor_start = new int[edge_num];
+	#pragma omp parallel for
+	for (int64_t i = 0; i <= nodeid_max; i++) {
+		int start = offset[i];
+		for (int j=0; j<degree[i];j++)
+			neighboor_start[start+j] = i;
+	}
+
 	sort_neighboor(_temp);
 
 	#pragma omp parallel for
@@ -178,6 +187,12 @@ MyGraph::MyGraph(const char* file_name){
 	}
 
 	sort_neighboor(_temp);
+	// for(int i=0;i<edge_num;i++)
+	// cout<<neighboor[i]<<" ";
+	// cout<<endl;
+	// for(int i=0;i<edge_num;i++)
+	// cout<<neighboor_start[i]<<" ";
+	// cout<<endl;
 }
 
 bool MyGraph::arc_exist(int u, int v) {
@@ -208,7 +223,7 @@ bool MyGraph::arc_exist_sorted(int u, int v) {
 	return binary_search(neighboor + offset[x], neighboor + offset[x] + degree[x], y);
 }
 
-void loadbatch(MyGraph* G,std::ifstream* fin, int* _temp, bool* state){
+void loadbatch(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state){
 	char buffer[BUFFERSIZE];
 	G->fin_lock.lock();
 	fin->read(buffer, BUFFERSIZE);
@@ -219,14 +234,14 @@ void loadbatch(MyGraph* G,std::ifstream* fin, int* _temp, bool* state){
 		x = *(u + 2 * j);
 		y = *(u + 2 * j + 1);
 		if(x<y){
-			G->lock[x].lock();
+			lock[x].lock();
 			G->neighboor[G->offset[x] + G->degree[x]++] = y;
-			G->lock[x].unlock();
+			lock[x].unlock();
 		}
 		if(x>y){
-			G->lock[y].lock();
+			lock[y].lock();
 			G->neighboor[G->offset[y] + G->degree[y]++] = x;
-			G->lock[y].unlock();
+			lock[y].unlock();
 		}	
 	}
 	*state = false;

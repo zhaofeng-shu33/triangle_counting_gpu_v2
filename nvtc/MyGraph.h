@@ -32,6 +32,7 @@ class MyGraph{
 
 		// neighboor table starting address
 		int* neighboor;
+		int* neighboor_start;
 
 		// maximum node id
 		int64_t nodeid_max;
@@ -39,7 +40,7 @@ class MyGraph{
 		// total number of edges
 		int64_t edge_num;
 
-		mutex* lock;
+		//mutex* lock;
 		mutex fin_lock;
 
 	private:

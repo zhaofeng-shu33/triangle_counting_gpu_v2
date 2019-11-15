@@ -51,7 +51,7 @@ __global__ void UnzipEdges(int m, int* edges, int* unzipped_edges) {
   }
 }
 
-__global__ void CalculateTriangles_v2(int n,const int* __restrict__ dev_neighbor,const int64_t* __restrict__ dev_offset,const int* __restrict__ dev_length, uint64_t* results,int deviceCount = 1, int deviceIdx = 0) {
+__global__ void CalculateTriangles_v2(int n,const int* __restrict__ dev_neighbor,const int64_t* __restrict__ dev_offset,const int* __restrict__ dev_length, const int* __restrict__ dev_neighbor_start, uint64_t* results,int deviceCount = 1, int deviceIdx = 0) {
    int from =
     gridDim.x * blockDim.x * deviceIdx +
     blockDim.x * blockIdx.x +
@@ -59,25 +59,29 @@ __global__ void CalculateTriangles_v2(int n,const int* __restrict__ dev_neighbor
   int step = deviceCount * gridDim.x * blockDim.x;
   
   uint64_t count = 0;
-  for (int i = from; i < n; i += step) {	
-    for(int u = 0; u <= dev_length[i]-1; u++){
-    	int j = dev_neighbor[dev_offset[i]+u];
-        int64_t j_it = dev_offset[j];
-        int64_t i_it = dev_offset[i];
-        int64_t i_it_end = dev_offset[j]+dev_length[j]-1;
-        int64_t j_it_end = dev_offset[i]+dev_length[i]-1;
-	
- 	while(j_it <= i_it_end && i_it <= j_it_end){
-        int d = dev_neighbor[i_it] - dev_neighbor[j_it];
-		if ( d == 0 ){
-			count++;
-		}
-		if (d <= 0)
-			i_it++; 
-		if (d >= 0)
-			j_it++;
-	}
-  }
+  //for (int i = from; i < n; i += step) {	
+    //for(int u = 0; u <= dev_length[i]-1; u++){
+      //int j = dev_neighbor[dev_offset[i]+u];
+  for (int k = from; k < n; k += step) {
+    int i =  dev_neighbor_start[k]; 
+    int j =  dev_neighbor[k]; 
+    if (j==2147483647) continue;
+    int64_t j_it = dev_offset[j];
+    int64_t i_it = dev_offset[i];
+    int64_t j_it_end = j_it+dev_length[j]-1;
+    int64_t i_it_end = i_it+dev_length[i]-1;
+
+    int a = dev_neighbor[i_it], b = dev_neighbor[j_it]; 
+    while(j_it <= j_it_end && i_it <= i_it_end){
+      int d = a-b;
+      if ( d == 0 ){
+        count++;
+      }
+      if (d <= 0)
+        a = dev_neighbor[++i_it]; 
+      if (d >= 0)
+        b = dev_neighbor[++j_it];
+    }
   }
   results[blockDim.x * blockIdx.x + threadIdx.x] = count;
 }
@@ -226,6 +230,7 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
     int64_t* dev_offset;
     int* dev_neighbor;
     int* dev_length;
+    int* dev_neighbor_start;
     CUCHECK(cudaMalloc(&dev_offset, (myGraph.nodeid_max + 2) * sizeof(int64_t)));
     CUCHECK(cudaMemcpyAsync(
        dev_offset, myGraph.offset, (myGraph.nodeid_max + 2) * sizeof(int64_t), cudaMemcpyHostToDevice));
@@ -238,6 +243,10 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
     CUCHECK(cudaMemcpyAsync(
        dev_neighbor, myGraph.neighboor, ( myGraph.edge_num) * sizeof(int), cudaMemcpyHostToDevice));
     CUCHECK(cudaDeviceSynchronize());
+    CUCHECK(cudaMalloc(&dev_neighbor_start, ( myGraph.edge_num) * sizeof(int)));
+    CUCHECK(cudaMemcpyAsync(
+       dev_neighbor_start, myGraph.neighboor_start, ( myGraph.edge_num) * sizeof(int), cudaMemcpyHostToDevice));
+    CUCHECK(cudaDeviceSynchronize());
     const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();	
     uint64_t* dev_results;
     CUCHECK(cudaMalloc(&dev_results,
@@ -246,7 +255,7 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
     cudaSetDevice(0);
     cudaFuncSetCacheConfig(CalculateTriangles_v2, cudaFuncCachePreferL1);
     CalculateTriangles_v2<<<NUM_BLOCKS, NUM_THREADS>>>(
-        myGraph.nodeid_max + 1, dev_neighbor, dev_offset, dev_length, dev_results);
+        myGraph.offset[myGraph.nodeid_max+1], dev_neighbor, dev_offset, dev_length, dev_neighbor_start, dev_results);
     CUCHECK(cudaDeviceSynchronize());
     uint64_t result = SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
     return result;
