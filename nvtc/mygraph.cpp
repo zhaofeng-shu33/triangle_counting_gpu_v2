@@ -159,7 +159,7 @@ MyGraph::MyGraph(const char* file_name){
 	neighboor_start = new int[edge_num];
 	#pragma omp parallel for
 	for (int64_t i = 0; i <= nodeid_max; i++) {
-		int start = offset[i];
+		int64_t start = offset[i];
 		for (int j=0; j<degree[i];j++)
 			neighboor_start[start+j] = i;
 	}
