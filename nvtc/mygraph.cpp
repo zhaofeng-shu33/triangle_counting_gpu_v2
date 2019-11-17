@@ -247,7 +247,7 @@ void loadbatch(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* sta
 	*state = false;
 	return;
 }
-int get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t*& out){
+int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t*& out){
 	int64_t max_length = 0;
 	out = new int64_t[split_num+1];
 	out[0] = 0;
