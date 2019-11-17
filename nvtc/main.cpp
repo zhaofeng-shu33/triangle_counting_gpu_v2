@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     t->Done("Reading Data");
 #if SECONDVERSION
     //result = GpuForward_v2(myGraph);
-    result = GpuForwardSplit_v2(myGraph,1);
+    result = GpuForwardSplit_v2(myGraph,4);
 #else
 #if GPU
     if(device_hint == NULL || strcmp(device_hint, "GPU") == 0){
