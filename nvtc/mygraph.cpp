@@ -247,3 +247,18 @@ void loadbatch(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* sta
 	*state = false;
 	return;
 }
+int get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t*& out){
+	int64_t max_length = 0;
+	out = new int64_t[split_num+1];
+	out[0] = 0;
+	for(int i=1;i<split_num;i++){
+		int64_t target = out[i-1]+offset[nodeid_max+1]/split_num;
+		out[i] = *lower_bound(offset,offset+nodeid_max+2,target);
+	}
+	out[split_num] = offset[nodeid_max+1];
+	for(int i=1;i<=split_num;i++){
+		if(out[i]-out[i-1]>max_length)
+			max_length = out[i]-out[i-1];
+	}
+	return max_length;
+}

@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "iostream": "cpp",
-        "mutex": "cpp"
+        "mutex": "cpp",
+        "*.tcc": "cpp"
     }
 }

@@ -13,6 +13,8 @@
 #include <mutex>
 using namespace std;
 
+int get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t*& out);
+
 class MyGraph{
 	public:
 		// Construct Function

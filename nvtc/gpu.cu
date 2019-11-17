@@ -261,6 +261,17 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
     return result;
 }
 
+uint64_t GpuForwardSplit_v2(const MyGraph& myGraph){
+  CUCHECK(cudaSetDevice(0));
+  const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();
+  
+  int64_t* dev_offset;
+  int* dev_neighbor;
+  int* dev_length;
+  int* dev_neighbor_start;
+
+}
+
 uint64_t MultiGpuForward(int* edges, int device_count, int num_nodes, uint64_t num_edges) {
 #if TIMECOUNTING
   Timer* timer = Timer::NewTimer();
