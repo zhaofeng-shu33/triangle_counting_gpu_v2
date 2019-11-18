@@ -22,6 +22,7 @@ using namespace std;
 void foo(){return;};
 void loadbatch_R2(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state);
 void loadbatch_R3(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state);
+void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out);
 
 MyGraph::MyGraph(const char* file_name){
 	// Temporal variables
@@ -33,6 +34,10 @@ MyGraph::MyGraph(const char* file_name){
 	int x, y;
 	int node_max = 0;
 	//uint THREADNUM = thread::hardware_concurrency();
+	int* node_max_thread = new int[THREADNUM]{0};
+	thread* ths[THREADNUM];
+	bool* thread_state = new bool[THREADNUM]{false};
+	int i = 0;
 
 	// Compute edge num by file length
 	fin.open(file_name, ifstream::binary | ifstream::in);
@@ -42,34 +47,47 @@ MyGraph::MyGraph(const char* file_name){
 	
 	//Round 1, Get max id
 	cout << "Round 1, Get max id" << endl;
-	while (counter + BATCHSIZE < edge_num) {
-		fin.read(buffer, BUFFERSIZE);
-		u = reinterpret_cast<int*>(buffer);
-		for (int j = 0; j < BATCHSIZE; j++) {
-			x = *(u + 2 * j);
-			y = *(u + 2 * j + 1);
-			if (x > node_max) {
-				node_max = x;
-			}
-			if (y > node_max) {
-				node_max = y;
-			}
-		}
-		counter = counter + BATCHSIZE;
+	char* entire_data = new char[edge_num*8];
+	fin.read(entire_data, edge_num*8);
+	u = reinterpret_cast<int*>(entire_data);
+	for(int i=0;i<THREADNUM;i++)
+		ths[i] = new thread(get_max, u, edge_num*2, i, THREADNUM, node_max_thread+i);
+	for(i=0;i<THREADNUM;i++){
+		ths[i]->join();
+		if(node_max_thread[i]>nodeid_max)
+			nodeid_max = node_max_thread[i];
 	}
-	fin.read(buffer, (edge_num-counter)*8);
-	u = reinterpret_cast<int*>(buffer);
-	for (int64_t i = 0; i < edge_num-counter; i++) {
-		x = *(u + 2 * i);
-		y = *(u + 2 * i + 1);
-		if (x > node_max) {
-			node_max = x;
-		}
-		if (y > node_max) {
-			node_max = y;
-		}
-	}
-	nodeid_max = node_max;
+	delete[] entire_data;
+	cout<<nodeid_max<<endl;
+
+	// while (counter + BATCHSIZE < edge_num) {
+	// 	fin.read(buffer, BUFFERSIZE);
+	// 	u = reinterpret_cast<int*>(buffer);
+	// 	for (int j = 0; j < BATCHSIZE; j++) {
+	// 		x = *(u + 2 * j);
+	// 		y = *(u + 2 * j + 1);
+	// 		if (x > node_max) {
+	// 			node_max = x;
+	// 		}
+	// 		if (y > node_max) {
+	// 			node_max = y;
+	// 		}
+	// 	}
+	// 	counter = counter + BATCHSIZE;
+	// }
+	// fin.read(buffer, (edge_num-counter)*8);
+	// u = reinterpret_cast<int*>(buffer);
+	// for (int64_t i = 0; i < edge_num-counter; i++) {
+	// 	x = *(u + 2 * i);
+	// 	y = *(u + 2 * i + 1);
+	// 	if (x > node_max) {
+	// 		node_max = x;
+	// 	}
+	// 	if (y > node_max) {
+	// 		node_max = y;
+	// 	}
+	// }
+	// nodeid_max = node_max;
 	
 	// Call for mem
 	offset = new int64_t[nodeid_max +2];
@@ -82,15 +100,10 @@ MyGraph::MyGraph(const char* file_name){
 	cout << "Round 2, Get node degree" << endl;
 	fin.seekg(0, fin.beg);
 	counter = 0;
-	//bool thread_state[THREADNUM]={false};
-	thread* ths[THREADNUM];
-	bool* thread_state = new bool[THREADNUM]{false};
-	for(int i=0;i<THREADNUM;i++)
-		ths[i] = new thread(foo);
-	int i = 0;
+	i = 0;
 	while (counter + BATCHSIZE < edge_num ) {
 		if(!thread_state[i]){
-			thread_state[i] = true;
+			thread_state[i] = true;	
 			if (ths[i]->joinable())
 				ths[i]->join();
 			ths[i]->~thread();
@@ -102,15 +115,6 @@ MyGraph::MyGraph(const char* file_name){
 	for(i=0;i<THREADNUM;i++){
 		ths[i]->join();
 	}
-	// bool done = false;
-	// while(!done){
-	// 	for(i=0;i<THREADNUM;i++){
-	// 		if(thread_state[i])
-	// 			break;
-	// 	}
-	// 	if(i==THREADNUM)
-	// 		done = true;
-	// }
 	fin.read(buffer, (edge_num-counter)*8);
 	u = reinterpret_cast<int*>(buffer);
 	for (int64_t i = 0; i < edge_num-counter; i++) {
@@ -146,15 +150,6 @@ MyGraph::MyGraph(const char* file_name){
 	for(i=0;i<THREADNUM;i++){
 		ths[i]->join();
 	}
-	// done = false;
-	// while(!done){
-	// 	for(i=0;i<THREADNUM;i++){
-	// 		if(thread_state[i])
-	// 			break;
-	// 	}
-	// 	if(i==THREADNUM)
-	// 		done = true;
-	// }
 	fin.read(buffer, (edge_num-counter)*8);
 	u = reinterpret_cast<int*>(buffer);
 	for (int64_t i = 0; i < edge_num-counter; i++) {
@@ -232,6 +227,15 @@ bool MyGraph::arc_exist_sorted(int u, int v) {
 		y = u;
 	}
 	return binary_search(neighboor + offset[x], neighboor + offset[x] + degree[x], y);
+}
+
+void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out){
+	int max = 0;
+	for(int64_t i = from;i<length;i+=step){
+		if(u[i]>max)
+			max = u[i];
+	}
+	*out = max;
 }
 
 void loadbatch_R2(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state){
