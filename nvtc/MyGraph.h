@@ -13,7 +13,6 @@
 #include <mutex>
 using namespace std;
 
-int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t cpu_offset, int64_t*& out);
 
 class MyGraph{
 	public:
@@ -49,3 +48,6 @@ class MyGraph{
 		void sort_neighboor(int* d);
 		bool inner_arc_exist(int u, int v, int* d);
 };
+
+int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t cpu_offset, int64_t*& out);
+void cpu_counting_edge_first_v2(MyGraph* g, int64_t cpu_offset, int64_t* out);

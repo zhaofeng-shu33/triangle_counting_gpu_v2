@@ -5,7 +5,7 @@
 #include "MyGraph.h"
 #include <stdint.h>
 
-int GetSplitNum(int num_nodes, uint64_t num_edges);
+int GetSplitNum(int num_nodes, uint64_t num_edges, int64_t cpu_offset);
 uint64_t GpuForward_v2(const MyGraph& myGraph);
 uint64_t GpuForwardSplit_v2(const MyGraph& myGraph, int split_num, int64_t cpu_offset);
 void PreInitGpuContext(int device = 0);

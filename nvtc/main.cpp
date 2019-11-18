@@ -40,10 +40,16 @@ int main(int argc, char *argv[]) {
     t->Done("Reading Data");
 #if SECONDVERSION
     //result = GpuForward_v2(myGraph);
-    int64_t cpu_split_target = (int64_t) ((double)(myGraph.offset[myGraph.nodeid_max+1]) * 0.2);
-    int64_t cpu_offset = *lower_bound(offset,offset+nodeid_max+2,cpu_split_target);
-    int split_num = GetSplitNum(myGraph.nodeid_max,myGraph.offset[myGraph.nodeid_max+1]);
-    result = GpuForwardSplit_v2(myGraph,split_num);
+    int64_t cpu_split_target = (int64_t) ((double)(myGraph.offset[myGraph.nodeid_max+1]) * 0.06);
+    int64_t cpu_offset = *lower_bound(myGraph.offset,myGraph.offset+myGraph.nodeid_max+2,cpu_split_target);
+    cout<<"CPU Task: "<<cpu_offset<<"/"<<myGraph.offset[myGraph.nodeid_max+1]<<endl;
+    int64_t cpu_result = 0;
+    thread cpu_thread(cpu_counting_edge_first_v2,&myGraph,cpu_offset,&cpu_result);
+    int split_num = GetSplitNum(myGraph.nodeid_max,myGraph.offset[myGraph.nodeid_max+1],cpu_offset);
+    result = GpuForwardSplit_v2(myGraph,split_num,cpu_offset);
+    cout<<"GPU Done."<<endl;
+    cpu_thread.join();
+    result = result + cpu_result;
 #else
 #if GPU
     if(device_hint == NULL || strcmp(device_hint, "GPU") == 0){
