@@ -39,7 +39,8 @@ int main(int argc, char *argv[]) {
     t->Done("Reading Data");
 #if SECONDVERSION
     //result = GpuForward_v2(myGraph);
-    result = GpuForwardSplit_v2(myGraph,4);
+    int split_num = GetSplitNum(myGraph.nodeid_max,myGraph.offset[myGraph.nodeid_max+1]);
+    result = GpuForwardSplit_v2(myGraph,split_num);
 #else
 #if GPU
     if(device_hint == NULL || strcmp(device_hint, "GPU") == 0){

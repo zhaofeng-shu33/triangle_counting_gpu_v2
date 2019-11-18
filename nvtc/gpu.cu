@@ -291,7 +291,11 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
     uint64_t result = SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
     return result;
 }
-
+int GetSplitNum(int num_nodes, uint64_t num_edges) {
+  uint64_t mem = (uint64_t)GlobalMemory();  // in Byte
+  mem -= (uint64_t)num_nodes * 16;  // uint64_t
+  return (1 + 12 * num_edges / mem);
+}
 uint64_t GpuForwardSplit_v2(const MyGraph& myGraph, int split_num){
   CUCHECK(cudaSetDevice(0));
   const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();
