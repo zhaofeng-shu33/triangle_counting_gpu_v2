@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <thread>
 
 using namespace std;
 
@@ -39,6 +40,8 @@ int main(int argc, char *argv[]) {
     t->Done("Reading Data");
 #if SECONDVERSION
     //result = GpuForward_v2(myGraph);
+    int64_t cpu_split_target = (int64_t) ((double)(myGraph.offset[myGraph.nodeid_max+1]) * 0.2);
+    int64_t cpu_offset = *lower_bound(offset,offset+nodeid_max+2,cpu_split_target);
     int split_num = GetSplitNum(myGraph.nodeid_max,myGraph.offset[myGraph.nodeid_max+1]);
     result = GpuForwardSplit_v2(myGraph,split_num);
 #else

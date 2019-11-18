@@ -291,18 +291,18 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
     uint64_t result = SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
     return result;
 }
-int GetSplitNum(int num_nodes, uint64_t num_edges) {
+int GetSplitNum(int num_nodes, uint64_t num_edges, int64_t cpu_offset) {
   uint64_t mem = (uint64_t)GlobalMemory();  // in Byte
   mem -= (uint64_t)num_nodes * 16;  // uint64_t
-  return (1 + 12 * num_edges / mem);
+  return (1 + 12 * (num_edges-cpu_offset) / mem);
 }
-uint64_t GpuForwardSplit_v2(const MyGraph& myGraph, int split_num){
+uint64_t GpuForwardSplit_v2(const MyGraph& myGraph, int split_num, int64_t cpu_offset){
   CUCHECK(cudaSetDevice(0));
   const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();
   
   // Calculate chunk size
   int64_t* split_offset;
-  int64_t chunk_length_max = get_split_v2(myGraph.offset, myGraph.nodeid_max, split_num, split_offset);
+  int64_t chunk_length_max = get_split_v2(myGraph.offset, myGraph.nodeid_max, split_num, cpu_offset, split_offset);
 
   // Call mem
   int64_t* dev_offset;
