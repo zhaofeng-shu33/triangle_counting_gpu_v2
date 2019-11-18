@@ -12,15 +12,15 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
-#define BUFFERSIZE 8192*16
+#define BUFFERSIZE 8192*64
 #define BATCHSIZE BUFFERSIZE/8
 #define INTMAX 2147483647
-#define THREADNUM 16
 
 using namespace std;
 
 void foo(){return;};
-void loadbatch(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state);
+void loadbatch_R2(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state);
+void loadbatch_R3(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state);
 
 MyGraph::MyGraph(const char* file_name){
 	// Temporal variables
@@ -31,6 +31,7 @@ MyGraph::MyGraph(const char* file_name){
 	int *u, *v;
 	int x, y;
 	int node_max = 0;
+	uint THREADNUM = thread::hardware_concurrency();
 
 	// Compute edge num by file length
 	fin.open(file_name, ifstream::binary | ifstream::in);
@@ -55,13 +56,11 @@ MyGraph::MyGraph(const char* file_name){
 		}
 		counter = counter + BATCHSIZE;
 	}
-	for (int64_t i = counter; i < edge_num; i++) {
-		fin.read(u_array, 4);
-		fin.read(v_array, 4);
-		u = reinterpret_cast<int*>(u_array);
-		v = reinterpret_cast<int*>(v_array);
-		x = *u;
-		y = *v;
+	fin.read(buffer, (edge_num-counter)*8);
+	u = reinterpret_cast<int*>(buffer);
+	for (int64_t i = 0; i < edge_num-counter; i++) {
+		x = *(u + 2 * i);
+		y = *(u + 2 * i + 1);
 		if (x > node_max) {
 			node_max = x;
 		}
@@ -82,43 +81,9 @@ MyGraph::MyGraph(const char* file_name){
 	cout << "Round 2, Get node degree" << endl;
 	fin.seekg(0, fin.beg);
 	counter = 0;
-	while (counter + BATCHSIZE < edge_num) {
-		fin.read(buffer, BUFFERSIZE);
-		u = reinterpret_cast<int*>(buffer);
-		for (int j = 0; j < BATCHSIZE; j++) {
-			x = *(u + 2 * j);
-			y = *(u + 2 * j + 1);
-			if(x<y)
-				_temp[x]++;
-			if(x>y)
-				_temp[y]++;
-		}
-		counter = counter + BATCHSIZE;
-	}
-	for (int64_t i = counter; i < edge_num; i++) {
-		fin.read(u_array, 4);
-		fin.read(v_array, 4);
-		u = reinterpret_cast<int*>(u_array);
-		v = reinterpret_cast<int*>(v_array);
-		x = *u;
-		y = *v;
-		if(x<y)
-			_temp[x]++;
-		if(x>y)
-			_temp[y]++;
-	}
-
-	offset[0] = 0;
-	for (int64_t i = 1; i <= nodeid_max+1; i++) {
-		offset[i] = offset[i - 1] + _temp[i - 1];
-	}
-
-	//Round 3, Record neighboors
-	cout << "Round 3, Record neighboors" << endl;
-	fin.seekg(0, fin.beg);
-	counter = 0;
-	bool thread_state[THREADNUM]={false};
+	//bool thread_state[THREADNUM]={false};
 	thread* ths[THREADNUM];
+	bool* thread_state = new bool[THREADNUM]{false};
 	for(int i=0;i<THREADNUM;i++)
 		ths[i] = new thread(foo);
 	int i = 0;
@@ -128,31 +93,70 @@ MyGraph::MyGraph(const char* file_name){
 			if (ths[i]->joinable())
 				ths[i]->join();
 			ths[i]->~thread();
-			ths[i] = new thread(loadbatch,this,&fin,_temp,lock,thread_state+i);
+			ths[i] = new thread(loadbatch_R2,this,&fin,_temp,lock,thread_state+i);
 			counter = counter + BATCHSIZE;
 		}
-		i = (i+1)%16;	
+		i = (i+1)%THREADNUM;	
 	}
 	bool done = false;
 	while(!done){
-		for(i=0;i<16;i++){
+		for(i=0;i<THREADNUM;i++){
 			if(thread_state[i])
 				break;
 		}
-		if(i==16)
+		if(i==THREADNUM)
 			done = true;
 	}
-	for (int64_t i = counter; i < edge_num; i++) {
-		fin.read(u_array, 4);
-		fin.read(v_array, 4);
-		u = reinterpret_cast<int*>(u_array);
-		v = reinterpret_cast<int*>(v_array);
-		x = *u;
-		y = *v;
+	fin.read(buffer, (edge_num-counter)*8);
+	u = reinterpret_cast<int*>(buffer);
+	for (int64_t i = 0; i < edge_num-counter; i++) {
+		x = *(u + 2 * i);
+		y = *(u + 2 * i + 1);
 		if(x<y)
-		neighboor[offset[x] + degree[x]++] = y;
+			_temp[x]++;
 		if(x>y)
-		neighboor[offset[y] + degree[y]++] = x;
+			_temp[y]++;
+	}
+	
+	offset[0] = 0;
+	for (int64_t i = 1; i <= nodeid_max+1; i++) {
+		offset[i] = offset[i - 1] + _temp[i - 1];
+	}
+
+	//Round 3, Record neighboors
+	cout << "Round 3, Record neighboors" << endl;
+	fin.seekg(0, fin.beg);
+	counter = 0;
+	i = 0;
+	while (counter + BATCHSIZE < edge_num ) {
+		if(!thread_state[i]){
+			thread_state[i] = true;
+			if (ths[i]->joinable())
+				ths[i]->join();
+			ths[i]->~thread();
+			ths[i] = new thread(loadbatch_R3,this,&fin,_temp,lock,thread_state+i);
+			counter = counter + BATCHSIZE;
+		}
+		i = (i+1)%THREADNUM;	
+	}
+	done = false;
+	while(!done){
+		for(i=0;i<THREADNUM;i++){
+			if(thread_state[i])
+				break;
+		}
+		if(i==THREADNUM)
+			done = true;
+	}
+	fin.read(buffer, (edge_num-counter)*8);
+	u = reinterpret_cast<int*>(buffer);
+	for (int64_t i = 0; i < edge_num-counter; i++) {
+		x = *(u + 2 * i);
+		y = *(u + 2 * i + 1);
+		if(x<y)
+			neighboor[offset[x] + degree[x]++] = y;
+		if(x>y)
+			neighboor[offset[y] + degree[y]++] = x;
 	}
 
 	delete [] lock;
@@ -223,7 +227,32 @@ bool MyGraph::arc_exist_sorted(int u, int v) {
 	return binary_search(neighboor + offset[x], neighboor + offset[x] + degree[x], y);
 }
 
-void loadbatch(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state){
+void loadbatch_R2(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state){
+	char buffer[BUFFERSIZE];
+	G->fin_lock.lock();
+	fin->read(buffer, BUFFERSIZE);
+	G->fin_lock.unlock();
+	int* u = reinterpret_cast<int*>(buffer);
+	int x,y;
+	for (int j = 0; j < BATCHSIZE; j++) {
+		x = *(u + 2 * j);
+		y = *(u + 2 * j + 1);
+		if(x<y){
+			lock[x].lock();
+			_temp[x]++;
+			lock[x].unlock();
+		}
+		if(x>y){
+			lock[y].lock();
+			_temp[y]++;
+			lock[y].unlock();
+		}	
+	}
+	*state = false;
+	return;
+}
+
+void loadbatch_R3(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state){
 	char buffer[BUFFERSIZE];
 	G->fin_lock.lock();
 	fin->read(buffer, BUFFERSIZE);

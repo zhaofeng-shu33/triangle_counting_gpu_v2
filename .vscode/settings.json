@@ -4,6 +4,7 @@
         "mutex": "cpp",
         "*.tcc": "cpp",
         "functional": "cpp",
-        "*.cuh": "cpp"
+        "*.cuh": "cpp",
+        "ostream": "cpp"
     }
 }
