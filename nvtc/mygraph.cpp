@@ -99,15 +99,18 @@ MyGraph::MyGraph(const char* file_name){
 		}
 		i = (i+1)%THREADNUM;	
 	}
-	bool done = false;
-	while(!done){
-		for(i=0;i<THREADNUM;i++){
-			if(thread_state[i])
-				break;
-		}
-		if(i==THREADNUM)
-			done = true;
+	for(i=0;i<THREADNUM;i++){
+		ths[i]->join();
 	}
+	// bool done = false;
+	// while(!done){
+	// 	for(i=0;i<THREADNUM;i++){
+	// 		if(thread_state[i])
+	// 			break;
+	// 	}
+	// 	if(i==THREADNUM)
+	// 		done = true;
+	// }
 	fin.read(buffer, (edge_num-counter)*8);
 	u = reinterpret_cast<int*>(buffer);
 	for (int64_t i = 0; i < edge_num-counter; i++) {
@@ -140,15 +143,18 @@ MyGraph::MyGraph(const char* file_name){
 		}
 		i = (i+1)%THREADNUM;	
 	}
-	done = false;
-	while(!done){
-		for(i=0;i<THREADNUM;i++){
-			if(thread_state[i])
-				break;
-		}
-		if(i==THREADNUM)
-			done = true;
+	for(i=0;i<THREADNUM;i++){
+		ths[i]->join();
 	}
+	// done = false;
+	// while(!done){
+	// 	for(i=0;i<THREADNUM;i++){
+	// 		if(thread_state[i])
+	// 			break;
+	// 	}
+	// 	if(i==THREADNUM)
+	// 		done = true;
+	// }
 	fin.read(buffer, (edge_num-counter)*8);
 	u = reinterpret_cast<int*>(buffer);
 	for (int64_t i = 0; i < edge_num-counter; i++) {
