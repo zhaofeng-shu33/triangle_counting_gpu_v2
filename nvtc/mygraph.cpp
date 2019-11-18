@@ -15,6 +15,7 @@
 #define BUFFERSIZE 8192*64
 #define BATCHSIZE BUFFERSIZE/8
 #define INTMAX 2147483647
+#define THREADNUM 8
 
 using namespace std;
 
@@ -31,7 +32,7 @@ MyGraph::MyGraph(const char* file_name){
 	int *u, *v;
 	int x, y;
 	int node_max = 0;
-	uint THREADNUM = thread::hardware_concurrency();
+	//uint THREADNUM = thread::hardware_concurrency();
 
 	// Compute edge num by file length
 	fin.open(file_name, ifstream::binary | ifstream::in);
