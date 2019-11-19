@@ -59,35 +59,6 @@ MyGraph::MyGraph(const char* file_name){
 	}
 	delete[] entire_data;
 	cout<<nodeid_max<<endl;
-
-	// while (counter + BATCHSIZE < edge_num) {
-	// 	fin.read(buffer, BUFFERSIZE);
-	// 	u = reinterpret_cast<int*>(buffer);
-	// 	for (int j = 0; j < BATCHSIZE; j++) {
-	// 		x = *(u + 2 * j);
-	// 		y = *(u + 2 * j + 1);
-	// 		if (x > node_max) {
-	// 			node_max = x;
-	// 		}
-	// 		if (y > node_max) {
-	// 			node_max = y;
-	// 		}
-	// 	}
-	// 	counter = counter + BATCHSIZE;
-	// }
-	// fin.read(buffer, (edge_num-counter)*8);
-	// u = reinterpret_cast<int*>(buffer);
-	// for (int64_t i = 0; i < edge_num-counter; i++) {
-	// 	x = *(u + 2 * i);
-	// 	y = *(u + 2 * i + 1);
-	// 	if (x > node_max) {
-	// 		node_max = x;
-	// 	}
-	// 	if (y > node_max) {
-	// 		node_max = y;
-	// 	}
-	// }
-	// nodeid_max = node_max;
 	
 	// Call for mem
 	offset = new int64_t[nodeid_max +2];
