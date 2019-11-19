@@ -40,9 +40,10 @@ int main(int argc, char *argv[]) {
     t->Done("Reading Data");
 #if SECONDVERSION
     int64_t cpu_split_target = (int64_t) ((double)(myGraph.offset[myGraph.nodeid_max+1]) * 0.02);
+    // Disable cpu coorboration by set cpu_offset = 0;
     int64_t cpu_offset = 0;// *lower_bound(myGraph.offset,myGraph.offset+myGraph.nodeid_max+2,cpu_split_target);
     int split_num = GetSplitNum(myGraph.nodeid_max,myGraph.offset[myGraph.nodeid_max+1],cpu_offset);
-    cout<<"GPU Split: "<<split_num<<" Submit..."<<endl;
+    cout<<"GPU Split Num: "<<split_num<<endl;
     if (split_num>1){
         int64_t cpu_result = 0;
         cout<<"CPU Task: "<<cpu_offset<<"/"<<myGraph.offset[myGraph.nodeid_max+1]<<" Start..."<<endl;

@@ -24,6 +24,7 @@ void loadbatch_R2(MyGraph* G,std::ifstream* fin, int* _temp, int* _temp2, mutex*
 void loadbatch_R3(MyGraph* G,std::ifstream* fin, int* _temp, int* _temp2, mutex* lock, bool* state);
 void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out);
 void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2);
+void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, int* _temp2, int* _temp);
 
 MyGraph::MyGraph(const char* file_name){
 	// Temporal variables
@@ -59,61 +60,71 @@ MyGraph::MyGraph(const char* file_name){
 			nodeid_max = node_max_thread[i];
 	}
 
+	//Round 2, Get node degree, use this to decide where a edge should store
+	cout << "Round 2, Get degree" << endl;
 	int* _temp2 = new int[nodeid_max + 1];
-	cout << "Round 1.1, Get real degree" << endl;
 	for(int i=0;i<THREADNUM;i++)
 		ths[i] = new thread(get_degree, u, edge_num*2, 2*i, 2*THREADNUM, _temp2);
 	for(i=0;i<THREADNUM;i++){
 		ths[i]->join();
 	}
 
-	delete[] entire_data;
-	
-	
-	// Call for mem
-	offset = new int64_t[nodeid_max +2];
-	degree = new int[nodeid_max + 1];
-	neighboor = new int[edge_num];
+	//Round 2, Get offset
+	cout << "Round 3, Get offset" << endl;
 	mutex* lock = new mutex[nodeid_max + 1];
 	int* _temp = new int[nodeid_max + 1];
-
-	//Round 2, Get node degree
-	cout << "Round 2, Get node degree" << endl;
-	fin.seekg(0, fin.beg);
-	counter = 0;
-	i = 0;
-	while (counter + BATCHSIZE < edge_num ) {
-		if(!thread_state[i]){
-			thread_state[i] = true;	
-			if (ths[i]->joinable())
-				ths[i]->join();
-			ths[i]->~thread();
-			ths[i] = new thread(loadbatch_R2,this,&fin,_temp,_temp2,lock,thread_state+i);
-			counter = counter + BATCHSIZE;
-		}
-		i = (i+1)%THREADNUM;	
-	}
+	for(int i=0;i<THREADNUM;i++)
+		ths[i] = new thread(get_length, u, edge_num*2, 2*i, 2*THREADNUM, lock, _temp2, _temp);
 	for(i=0;i<THREADNUM;i++){
 		ths[i]->join();
 	}
-	fin.read(buffer, (edge_num-counter)*8);
-	u = reinterpret_cast<int*>(buffer);
-	for (int64_t i = 0; i < edge_num-counter; i++) {
-		x = *(u + 2 * i);
-		y = *(u + 2 * i + 1);
-		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) )
-			_temp[x]++;
-		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) )
-			_temp[y]++;
-	}
-	
+
+	delete[] entire_data;
+	degree = new int[nodeid_max + 1];
+	neighboor = new int[edge_num];
+	offset = new int64_t[nodeid_max +2];
 	offset[0] = 0;
 	for (int64_t i = 1; i <= nodeid_max+1; i++) {
 		offset[i] = offset[i - 1] + _temp[i - 1];
 	}
+	
+	// //Round 2, Get node degree
+	// cout << "Round 2, Get node degree" << endl;
+	// fin.seekg(0, fin.beg);
+	// counter = 0;
+	// i = 0;
+	// while (counter + BATCHSIZE < edge_num ) {
+	// 	if(!thread_state[i]){
+	// 		thread_state[i] = true;	
+	// 		if (ths[i]->joinable())
+	// 			ths[i]->join();
+	// 		ths[i]->~thread();
+	// 		ths[i] = new thread(loadbatch_R2,this,&fin,_temp,_temp2,lock,thread_state+i);
+	// 		counter = counter + BATCHSIZE;
+	// 	}
+	// 	i = (i+1)%THREADNUM;	
+	// }
+	// for(i=0;i<THREADNUM;i++){
+	// 	ths[i]->join();
+	// }
+	// fin.read(buffer, (edge_num-counter)*8);
+	// u = reinterpret_cast<int*>(buffer);
+	// for (int64_t i = 0; i < edge_num-counter; i++) {
+	// 	x = *(u + 2 * i);
+	// 	y = *(u + 2 * i + 1);
+	// 	if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) )
+	// 		_temp[x]++;
+	// 	if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) )
+	// 		_temp[y]++;
+	// }
+	
+	// offset[0] = 0;
+	// for (int64_t i = 1; i <= nodeid_max+1; i++) {
+	// 	offset[i] = offset[i - 1] + _temp[i - 1];
+	// }
 
 	//Round 3, Record neighboors
-	cout << "Round 3, Record neighboors" << endl;
+	cout << "Round 4, Record neighboors" << endl;
 	fin.seekg(0, fin.beg);
 	counter = 0;
 	i = 0;
@@ -222,6 +233,23 @@ void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2){
 	for(int64_t i = from;i<length;i+=step){
 		temp2[u[i]]++;
 		temp2[u[i+1]]++;
+	}
+}
+void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, int* _temp2, int* _temp){
+	int x,y;
+	for(int64_t i = from;i<length;i+=step){
+		x = *(u + i);
+		y = *(u + i + 1);
+		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) ){
+			lock[x].lock();
+			_temp[x]++;
+			lock[x].unlock();
+		}
+		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) ){
+			lock[y].lock();
+			_temp[y]++;
+			lock[y].unlock();
+		}	
 	}
 }
 
