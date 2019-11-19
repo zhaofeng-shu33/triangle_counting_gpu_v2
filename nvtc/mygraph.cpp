@@ -20,9 +20,10 @@
 using namespace std;
 
 void foo(){return;};
-void loadbatch_R2(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state);
-void loadbatch_R3(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state);
+void loadbatch_R2(MyGraph* G,std::ifstream* fin, int* _temp, int* _temp2, mutex* lock, bool* state);
+void loadbatch_R3(MyGraph* G,std::ifstream* fin, int* _temp, int* _temp2, mutex* lock, bool* state);
 void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out);
+void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2);
 
 MyGraph::MyGraph(const char* file_name){
 	// Temporal variables
@@ -57,8 +58,17 @@ MyGraph::MyGraph(const char* file_name){
 		if(node_max_thread[i]>nodeid_max)
 			nodeid_max = node_max_thread[i];
 	}
+
+	int* _temp2 = new int[nodeid_max + 1];
+	cout << "Round 1.1, Get real degree" << endl;
+	for(int i=0;i<THREADNUM;i++)
+		ths[i] = new thread(get_degree, u, edge_num*2, 2*i, 2*THREADNUM, _temp2);
+	for(i=0;i<THREADNUM;i++){
+		ths[i]->join();
+	}
+
 	delete[] entire_data;
-	cout<<nodeid_max<<endl;
+	
 	
 	// Call for mem
 	offset = new int64_t[nodeid_max +2];
@@ -78,7 +88,7 @@ MyGraph::MyGraph(const char* file_name){
 			if (ths[i]->joinable())
 				ths[i]->join();
 			ths[i]->~thread();
-			ths[i] = new thread(loadbatch_R2,this,&fin,_temp,lock,thread_state+i);
+			ths[i] = new thread(loadbatch_R2,this,&fin,_temp,_temp2,lock,thread_state+i);
 			counter = counter + BATCHSIZE;
 		}
 		i = (i+1)%THREADNUM;	
@@ -91,9 +101,9 @@ MyGraph::MyGraph(const char* file_name){
 	for (int64_t i = 0; i < edge_num-counter; i++) {
 		x = *(u + 2 * i);
 		y = *(u + 2 * i + 1);
-		if(x<y)
+		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) )
 			_temp[x]++;
-		if(x>y)
+		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) )
 			_temp[y]++;
 	}
 	
@@ -113,7 +123,7 @@ MyGraph::MyGraph(const char* file_name){
 			if (ths[i]->joinable())
 				ths[i]->join();
 			ths[i]->~thread();
-			ths[i] = new thread(loadbatch_R3,this,&fin,_temp,lock,thread_state+i);
+			ths[i] = new thread(loadbatch_R3,this,&fin,_temp,_temp2,lock,thread_state+i);
 			counter = counter + BATCHSIZE;
 		}
 		i = (i+1)%THREADNUM;	
@@ -126,9 +136,9 @@ MyGraph::MyGraph(const char* file_name){
 	for (int64_t i = 0; i < edge_num-counter; i++) {
 		x = *(u + 2 * i);
 		y = *(u + 2 * i + 1);
-		if(x<y)
+		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) )
 			neighboor[offset[x] + degree[x]++] = y;
-		if(x>y)
+		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) )
 			neighboor[offset[y] + degree[y]++] = x;
 	}
 
@@ -208,8 +218,14 @@ void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out){
 	}
 	*out = max;
 }
+void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2){
+	for(int64_t i = from;i<length;i+=step){
+		temp2[u[i]]++;
+		temp2[u[i+1]]++;
+	}
+}
 
-void loadbatch_R2(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state){
+void loadbatch_R2(MyGraph* G,std::ifstream* fin, int* _temp, int* _temp2, mutex* lock, bool* state){
 	char buffer[BUFFERSIZE];
 	G->fin_lock.lock();
 	fin->read(buffer, BUFFERSIZE);
@@ -219,12 +235,12 @@ void loadbatch_R2(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* 
 	for (int j = 0; j < BATCHSIZE; j++) {
 		x = *(u + 2 * j);
 		y = *(u + 2 * j + 1);
-		if(x<y){
+		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) ){
 			lock[x].lock();
 			_temp[x]++;
 			lock[x].unlock();
 		}
-		if(x>y){
+		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) ){
 			lock[y].lock();
 			_temp[y]++;
 			lock[y].unlock();
@@ -234,7 +250,7 @@ void loadbatch_R2(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* 
 	return;
 }
 
-void loadbatch_R3(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* state){
+void loadbatch_R3(MyGraph* G,std::ifstream* fin, int* _temp, int* _temp2, mutex* lock, bool* state){
 	char buffer[BUFFERSIZE];
 	G->fin_lock.lock();
 	fin->read(buffer, BUFFERSIZE);
@@ -244,12 +260,12 @@ void loadbatch_R3(MyGraph* G,std::ifstream* fin, int* _temp, mutex* lock, bool* 
 	for (int j = 0; j < BATCHSIZE; j++) {
 		x = *(u + 2 * j);
 		y = *(u + 2 * j + 1);
-		if(x<y){
+		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) ){
 			lock[x].lock();
 			G->neighboor[G->offset[x] + G->degree[x]++] = y;
 			lock[x].unlock();
 		}
-		if(x>y){
+		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) ){
 			lock[y].lock();
 			G->neighboor[G->offset[y] + G->degree[y]++] = x;
 			lock[y].unlock();

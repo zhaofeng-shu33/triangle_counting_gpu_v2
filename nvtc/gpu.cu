@@ -335,7 +335,7 @@ uint64_t GpuForwardSplit_v2(const MyGraph& myGraph, int split_num, int64_t cpu_o
   cudaFuncSetCacheConfig(CalculateTrianglesSplit_v2, cudaFuncCachePreferL1);
   int64_t result=0;
   for(int i=0; i<split_num; i++){
-    for(int j=i; j<split_num;j++){
+    for(int j=0; j<split_num;j++){
       CUCHECK(cudaMemcpyAsync(
         dev_neighbor_i, myGraph.neighboor+split_offset[i], (split_offset[i+1]-split_offset[i])*sizeof(int), cudaMemcpyHostToDevice));
       //CUCHECK(cudaDeviceSynchronize());

@@ -5,6 +5,7 @@
         "*.tcc": "cpp",
         "functional": "cpp",
         "*.cuh": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "thread": "cpp"
     }
 }
