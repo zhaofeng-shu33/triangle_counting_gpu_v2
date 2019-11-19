@@ -80,6 +80,7 @@ MyGraph::MyGraph(const char* file_name){
 	// }
 	
 	//Round 3, Get offset
+	delete[] entire_data;
 	mutex* lock = new mutex[nodeid_max + 1];
 	int* _temp = new int[nodeid_max + 1];
 	cout << "Round 3, Get offset" << endl;
@@ -111,7 +112,7 @@ MyGraph::MyGraph(const char* file_name){
 			_temp[y]++;
 	}
 	
-	delete[] entire_data;
+	
 	degree = new int[nodeid_max + 1];
 	neighboor = new int[edge_num];
 	offset = new int64_t[nodeid_max +2];
