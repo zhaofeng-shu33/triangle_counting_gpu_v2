@@ -16,6 +16,7 @@
 #define BATCHSIZE BUFFERSIZE/8
 #define INTMAX 2147483647
 #define THREADNUM 8
+#define LOCKSHARE 10
 
 using namespace std;
 
@@ -75,7 +76,7 @@ MyGraph::MyGraph(const char* file_name){
 
 	// //Round 3, Get offset
 	// cout << "Round 3, Get offset" << endl;
-	// mutex* lock = new mutex[nodeid_max + 1];
+	// mutex* lock = new mutex[nodeid_max/LOCKSHARE + 1];
 	// int* _temp = new int[nodeid_max + 1];
 	// for(int i=0;i<THREADNUM;i++)
 	// 	ths[i] = new thread(get_length, u, edge_num*2, 2*i, 2*THREADNUM, lock, _temp2, _temp);
@@ -85,7 +86,7 @@ MyGraph::MyGraph(const char* file_name){
 	
 	//Round 3, Get offset
 	delete[] entire_data;
-	mutex* lock = new mutex[nodeid_max + 1];
+	mutex* lock = new mutex[nodeid_max/LOCKSHARE + 1];
 	int* _temp = new int[nodeid_max + 1]();
 #if VERBOSE
 	cout << "Round 3, Get offset" << endl;
@@ -215,14 +216,14 @@ void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, 
 		x = *(u + i);
 		y = *(u + i + 1);
 		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) ){
-			lock[x].lock();
+			lock[x/LOCKSHARE].lock();
 			_temp[x]++;
-			lock[x].unlock();
+			lock[x/LOCKSHARE].unlock();
 		}
 		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) ){
-			lock[y].lock();
+			lock[y/LOCKSHARE].lock();
 			_temp[y]++;
-			lock[y].unlock();
+			lock[y/LOCKSHARE].unlock();
 		}	
 	}
 }
@@ -238,14 +239,14 @@ void loadbatch_R2(MyGraph* G,std::ifstream* fin, int* _temp, int* _temp2, mutex*
 		x = *(u + 2 * j);
 		y = *(u + 2 * j + 1);
 		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) ){
-			lock[x].lock();
+			lock[x/LOCKSHARE].lock();
 			_temp[x]++;
-			lock[x].unlock();
+			lock[x/LOCKSHARE].unlock();
 		}
 		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) ){
-			lock[y].lock();
+			lock[y/LOCKSHARE].lock();
 			_temp[y]++;
-			lock[y].unlock();
+			lock[y/LOCKSHARE].unlock();
 		}	
 	}
 	*state = false;
@@ -263,14 +264,14 @@ void loadbatch_R3(MyGraph* G,std::ifstream* fin, int* _temp, int* _temp2, mutex*
 		x = *(u + 2 * j);
 		y = *(u + 2 * j + 1);
 		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) ){
-			lock[x].lock();
+			lock[x/LOCKSHARE].lock();
 			G->neighboor[G->offset[x] + G->degree[x]++] = y;
-			lock[x].unlock();
+			lock[x/LOCKSHARE].unlock();
 		}
 		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) ){
-			lock[y].lock();
+			lock[y/LOCKSHARE].lock();
 			G->neighboor[G->offset[y] + G->degree[y]++] = x;
-			lock[y].unlock();
+			lock[y/LOCKSHARE].unlock();
 		}	
 	}
 	*state = false;
