@@ -112,7 +112,7 @@ MyGraph::MyGraph(const char* file_name){
 		offset[i] = offset[i - 1] + _temp[i - 1];
 	}
 
-	//Round 3, Record neighboors
+	//Round 4, Record neighboors
 #if VERBOSE
 	cout << "Round 4, Record neighboors" << endl;
 #endif
@@ -136,7 +136,7 @@ MyGraph::MyGraph(const char* file_name){
 	}
 	fin.read(buffer, (edge_num-counter)*8);
 	u = reinterpret_cast<int*>(buffer);
-	int shift;
+	int64_t shift;
 	for (int64_t i = 0; i < edge_num-counter; i++) {
 		if((counter+i)*2>=edge_num){
 			if(edge_num%2==0)
@@ -228,7 +228,8 @@ void loadbatch_R3(MyGraph* G,std::ifstream* fin, int64_t counter, int* _temp2, b
 	fin->read(buffer, BUFFERSIZE);
 	G->fin_lock.unlock();
 	int* u = reinterpret_cast<int*>(buffer);
-	int x,y,shift;
+	int x,y;
+	int64_t shift;
 	for (int j = 0; j < BATCHSIZE; j++) {
 		if((counter+j)*2>=G->edge_num){
 			if(G->edge_num%2==0)
