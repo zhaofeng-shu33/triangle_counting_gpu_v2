@@ -32,13 +32,13 @@ int main(int argc, char *argv[]) {
     // Disable cpu coorboration by set cpu_offset = 0;
     int64_t cpu_offset = 0;// *lower_bound(myGraph.offset,myGraph.offset+myGraph.nodeid_max+2,cpu_split_target);
     int split_num = GetSplitNum(myGraph.nodeid_max,myGraph.offset[myGraph.nodeid_max+1],cpu_offset);
-    cout<<"GPU Split Num: "<<split_num<<endl;
+    //cout<<"GPU Split Num: "<<split_num<<endl;
     if (split_num>1){
         int64_t cpu_result = 0;
-        cout<<"CPU Task: "<<cpu_offset<<"/"<<myGraph.offset[myGraph.nodeid_max+1]<<" Start..."<<endl;
+        //cout<<"CPU Task: "<<cpu_offset<<"/"<<myGraph.offset[myGraph.nodeid_max+1]<<" Start..."<<endl;
         thread cpu_thread(cpu_counting_edge_first_v2,&myGraph,cpu_offset,&cpu_result);
         result = GpuForwardSplit_v2(myGraph,split_num,cpu_offset);
-        cout<<"GPU Done."<<endl;
+        //cout<<"GPU Done."<<endl;
         cpu_thread.join();
         result = result + cpu_result;
     }

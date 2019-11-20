@@ -21,8 +21,7 @@
 using namespace std;
 
 void foo(){return;};
-void loadbatch_R2(MyGraph* G,std::ifstream* fin, int* _temp, int* _temp2, mutex* lock, bool* state);
-void loadbatch_R3(MyGraph* G,std::ifstream* fin, int* _temp, int* _temp2, mutex* lock, bool* state);
+void loadbatch_R3(MyGraph* G,std::ifstream* fin, int64_t counter, int* _temp2, bool* state);
 void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out);
 void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2);
 void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, int* _temp2, int* _temp);
@@ -53,7 +52,7 @@ MyGraph::MyGraph(const char* file_name){
 	cout << "Round 1, Get max id" << endl;
 #endif
 	nodeid_max = 0;
-	char* entire_data = new char[edge_num*8];
+	entire_data = new char[edge_num*8];
 	fin.read(entire_data, edge_num*8);
 	u = reinterpret_cast<int*>(entire_data);
 	for(int i=0;i<THREADNUM;i++)
@@ -76,7 +75,9 @@ MyGraph::MyGraph(const char* file_name){
 	}
 
 	//Round 3, Get offset
+#if VERBOSE
 	cout << "Round 3, Get offset" << endl;
+#endif
 	mutex* lock = new mutex[nodeid_max/LOCKSHARE + 1];
 	int* _temp = new int[nodeid_max + 1];
 	for(int i=0;i<THREADNUM;i++)
@@ -84,10 +85,27 @@ MyGraph::MyGraph(const char* file_name){
 	for(i=0;i<THREADNUM;i++){
 		ths[i]->join();
 	}
+	if(edge_num%2==0){
+		#pragma omp parallel for
+		for (int64_t i = edge_num; i <= 2*edge_num; i+=2) {
+			u[i-edge_num+1] = u[i];
+		}
+	}else{
+		#pragma omp parallel for
+		for (int64_t i = edge_num+1; i <= 2*edge_num; i+=2) {
+			u[i-edge_num] = u[i];
+		}
+	}
 	
-	delete[] entire_data;
+	//delete[] entire_data;
+	delete [] lock;
 	degree = new int[nodeid_max + 1]();
-	neighboor = new int[edge_num]();
+	#pragma omp parallel for
+	for (int64_t i = 0; i < nodeid_max+1; i++) {
+		degree[i] =  _temp[i];
+	}
+	neighboor = u+edge_num;
+	neighboor_start = u;
 	offset = new int64_t[nodeid_max +2]();
 	offset[0] = 0;
 	for (int64_t i = 1; i <= nodeid_max+1; i++) {
@@ -107,7 +125,7 @@ MyGraph::MyGraph(const char* file_name){
 			if (ths[i]->joinable())
 				ths[i]->join();
 			ths[i]->~thread();
-			ths[i] = new thread(loadbatch_R3,this,&fin,_temp,_temp2,lock,thread_state+i);
+			ths[i] = new thread(loadbatch_R3,this,&fin,counter,_temp2,thread_state+i);
 			counter = counter + BATCHSIZE;
 		}
 		i = (i+1)%THREADNUM;	
@@ -118,17 +136,25 @@ MyGraph::MyGraph(const char* file_name){
 	}
 	fin.read(buffer, (edge_num-counter)*8);
 	u = reinterpret_cast<int*>(buffer);
+	int shift;
 	for (int64_t i = 0; i < edge_num-counter; i++) {
+		if((counter+i)*2>=edge_num){
+			if(edge_num%2==0)
+				shift = ((counter+i)*2)-edge_num+1;
+			else
+				shift = ((counter+i)*2)-edge_num;
+		}else{
+			shift = (counter+i)*2;
+		}
 		x = *(u + 2 * i);
 		y = *(u + 2 * i + 1);
 		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) )
-			neighboor[offset[x] + degree[x]++] = y;
+			neighboor[offset[x] + neighboor_start[shift]] = y;
 		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) )
-			neighboor[offset[y] + degree[y]++] = x;
+			neighboor[offset[y] + neighboor_start[shift]] = x;
 	}
 
-	delete [] lock;
-	neighboor_start = new int[edge_num];
+
 	#pragma omp parallel for
 	for (int64_t i = 0; i <= nodeid_max; i++) {
 		int64_t start = offset[i];
@@ -183,61 +209,46 @@ void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, 
 		y = *(u + i + 1);
 		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) ){
 			lock[x/LOCKSHARE].lock();
-			_temp[x]++;
+			*(u + i) = _temp[x]++;
 			lock[x/LOCKSHARE].unlock();
 		}
 		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) ){
 			lock[y/LOCKSHARE].lock();
-			_temp[y]++;
+			*(u + i) = _temp[y]++;
 			lock[y/LOCKSHARE].unlock();
 		}	
 	}
 }
 
-void loadbatch_R2(MyGraph* G,std::ifstream* fin, int* _temp, int* _temp2, mutex* lock, bool* state){
-	char buffer[BUFFERSIZE];
-	G->fin_lock.lock();
-	fin->read(buffer, BUFFERSIZE);
-	G->fin_lock.unlock();
-	int* u = reinterpret_cast<int*>(buffer);
-	int x,y;
-	for (int j = 0; j < BATCHSIZE; j++) {
-		x = *(u + 2 * j);
-		y = *(u + 2 * j + 1);
-		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) ){
-			lock[x/LOCKSHARE].lock();
-			_temp[x]++;
-			lock[x/LOCKSHARE].unlock();
-		}
-		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) ){
-			lock[y/LOCKSHARE].lock();
-			_temp[y]++;
-			lock[y/LOCKSHARE].unlock();
-		}	
-	}
-	*state = false;
-	return;
-}
 
-void loadbatch_R3(MyGraph* G,std::ifstream* fin, int* _temp, int* _temp2, mutex* lock, bool* state){
+void loadbatch_R3(MyGraph* G,std::ifstream* fin, int64_t counter, int* _temp2, bool* state){
 	char buffer[BUFFERSIZE];
 	G->fin_lock.lock();
+	counter = fin->tellg()/8;
 	fin->read(buffer, BUFFERSIZE);
 	G->fin_lock.unlock();
 	int* u = reinterpret_cast<int*>(buffer);
-	int x,y;
+	int x,y,shift;
 	for (int j = 0; j < BATCHSIZE; j++) {
+		if((counter+j)*2>=G->edge_num){
+			if(G->edge_num%2==0)
+				shift = ((counter+j)*2)-G->edge_num+1;
+			else
+				shift = ((counter+j)*2)-G->edge_num;
+		}else{
+			shift = (counter+j)*2;
+		}	
 		x = *(u + 2 * j);
 		y = *(u + 2 * j + 1);
 		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) ){
-			lock[x/LOCKSHARE].lock();
-			G->neighboor[G->offset[x] + G->degree[x]++] = y;
-			lock[x/LOCKSHARE].unlock();
+
+			G->neighboor[G->offset[x] + G->neighboor_start[shift]] = y;
+
 		}
 		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) ){
-			lock[y/LOCKSHARE].lock();
-			G->neighboor[G->offset[y] + G->degree[y]++] = x;
-			lock[y/LOCKSHARE].unlock();
+
+			G->neighboor[G->offset[y] + G->neighboor_start[shift]] = x;
+
 		}	
 	}
 	*state = false;

@@ -22,6 +22,7 @@ class MyGraph{
 		// node ID -> neighboor table offset from int* neighboor.
 		int64_t* offset;
 
+		char* entire_data;
 		// node ID -> Node degree.
 		int* degree;
 
