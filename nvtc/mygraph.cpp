@@ -105,7 +105,8 @@ MyGraph::MyGraph(const char* file_name){
 		i = (i+1)%THREADNUM;	
 	}
 	for(i=0;i<THREADNUM;i++){
-		ths[i]->join();
+		if(ths[i]->joinable())
+			ths[i]->join();
 	}
 	fin.read(buffer, (edge_num-counter)*8);
 	u = reinterpret_cast<int*>(buffer);
@@ -117,7 +118,6 @@ MyGraph::MyGraph(const char* file_name){
 		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) )
 			_temp[y]++;
 	}
-	
 	
 	degree = new int[nodeid_max + 1];
 	neighboor = new int[edge_num];
@@ -146,7 +146,8 @@ MyGraph::MyGraph(const char* file_name){
 		i = (i+1)%THREADNUM;	
 	}
 	for(i=0;i<THREADNUM;i++){
-		ths[i]->join();
+		if(ths[i]->joinable())
+			ths[i]->join();
 	}
 	fin.read(buffer, (edge_num-counter)*8);
 	u = reinterpret_cast<int*>(buffer);
@@ -175,12 +176,6 @@ MyGraph::MyGraph(const char* file_name){
 		int m,n;
 		if (_temp[i]>1){
 			for(m=0;m<_temp[i];){
-				// if(neighboor[offset[i]+m]==i){
-				// 	degree[i]--;
-				// 	neighboor[offset[i]+m] = INTMAX;
-				// 	m++;
-				// 	continue;
-				// }
 				for(n=m+1;n<_temp[i] && neighboor[offset[i]+m]==neighboor[offset[i]+n];n++){
 					degree[i]--;
 					neighboor[offset[i]+n] = INTMAX;
@@ -191,12 +186,6 @@ MyGraph::MyGraph(const char* file_name){
 	}
 
 	sort_neighboor(_temp);
-	// for(int i=0;i<edge_num;i++)
-	// cout<<neighboor[i]<<" ";
-	// cout<<endl;
-	// for(int i=0;i<edge_num;i++)
-	// cout<<neighboor_start[i]<<" ";
-	// cout<<endl;
 }
 
 bool MyGraph::arc_exist(int u, int v) {
