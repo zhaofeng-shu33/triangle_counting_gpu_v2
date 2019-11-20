@@ -26,7 +26,7 @@ TEST(tc, io_nvgraph) {
     EXPECT_EQ(trcount, 3); 
     free(edges);
 }
-#if SECONDVERSION
+
 TEST(tcv2, io_bin) {
     MyGraph myGraph("test_io.bin");
     uint64_t tcount = GpuForward_v2(myGraph);
@@ -38,7 +38,6 @@ TEST(tcv2, io_nvgraph) {
     uint64_t tcount = GpuForward_v2(myGraph);
     EXPECT_EQ(tcount, 3);
 }
-#endif
 #endif
 
 TEST(cpu, io_bin) {
