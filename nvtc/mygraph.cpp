@@ -188,32 +188,11 @@ MyGraph::MyGraph(const char* file_name){
 	sort_neighboor(_temp);
 }
 
-bool MyGraph::arc_exist(int u, int v) {
-	return false;
-}
-
-bool MyGraph::inner_arc_exist(int u, int v, int* d) {
-	return false;
-}
-
 void MyGraph::sort_neighboor(int* d) {
 #pragma omp parallel for
 	for (int64_t i = 0; i <= nodeid_max; i++) {
 		sort(neighboor + offset[i], neighboor + offset[i] + d[i]);
 	}
-}
-
-bool MyGraph::arc_exist_sorted(int u, int v) {
-	int x, y;
-	if (u<v) {
-		x = u;
-		y = v;
-	}
-	else {
-		x = v;
-		y = u;
-	}
-	return binary_search(neighboor + offset[x], neighboor + offset[x] + degree[x], y);
 }
 
 void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out){

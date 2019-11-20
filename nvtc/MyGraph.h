@@ -18,12 +18,6 @@ class MyGraph{
 	public:
 		// Construct Function
 		MyGraph(const char* file_name);
-		
-		//Query arc exist using go-through check.
-		bool arc_exist(int u, int v);
-
-		//Query arc exist using binary search.
-		bool arc_exist_sorted(int u, int v);
 
 		// node ID -> neighboor table offset from int* neighboor.
 		int64_t* offset;
@@ -46,7 +40,6 @@ class MyGraph{
 
 	private:
 		void sort_neighboor(int* d);
-		bool inner_arc_exist(int u, int v, int* d);
 };
 
 int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t cpu_offset, int64_t*& out);
