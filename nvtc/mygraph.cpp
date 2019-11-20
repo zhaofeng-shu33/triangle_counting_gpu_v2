@@ -66,7 +66,7 @@ MyGraph::MyGraph(const char* file_name){
 #if VERBOSE
 	cout << "Round 2, Get degree" << endl;
 #endif
-	int* _temp2 = new int[nodeid_max + 1];
+	int* _temp2 = new int[nodeid_max + 1]();
 	for(int i=0;i<THREADNUM;i++)
 		ths[i] = new thread(get_degree, u, edge_num*2, 2*i, 2*THREADNUM, _temp2);
 	for(i=0;i<THREADNUM;i++){
@@ -86,7 +86,7 @@ MyGraph::MyGraph(const char* file_name){
 	//Round 3, Get offset
 	delete[] entire_data;
 	mutex* lock = new mutex[nodeid_max + 1];
-	int* _temp = new int[nodeid_max + 1];
+	int* _temp = new int[nodeid_max + 1]();
 #if VERBOSE
 	cout << "Round 3, Get offset" << endl;
 #endif
