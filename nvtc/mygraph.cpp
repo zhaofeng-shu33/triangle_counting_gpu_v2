@@ -74,52 +74,53 @@ MyGraph::MyGraph(const char* file_name){
 		ths[i]->join();
 	}
 
-	// //Round 3, Get offset
-	// cout << "Round 3, Get offset" << endl;
-	// mutex* lock = new mutex[nodeid_max/LOCKSHARE + 1];
-	// int* _temp = new int[nodeid_max + 1];
-	// for(int i=0;i<THREADNUM;i++)
-	// 	ths[i] = new thread(get_length, u, edge_num*2, 2*i, 2*THREADNUM, lock, _temp2, _temp);
-	// for(i=0;i<THREADNUM;i++){
-	// 	ths[i]->join();
-	// }
-	
 	//Round 3, Get offset
-	delete[] entire_data;
-	mutex* lock = new mutex[nodeid_max/LOCKSHARE + 1];
-	int* _temp = new int[nodeid_max + 1]();
-#if VERBOSE
 	cout << "Round 3, Get offset" << endl;
-#endif
-	fin.seekg(0, fin.beg);
-	counter = 0;
-	i = 0;
-	while (counter + BATCHSIZE < edge_num ) {
-		if(!thread_state[i]){
-			thread_state[i] = true;	
-			if (ths[i]->joinable())
-				ths[i]->join();
-			ths[i]->~thread();
-			ths[i] = new thread(loadbatch_R2,this,&fin,_temp,_temp2,lock,thread_state+i);
-			counter = counter + BATCHSIZE;
-		}
-		i = (i+1)%THREADNUM;	
-	}
+	mutex* lock = new mutex[nodeid_max/LOCKSHARE + 1];
+	int* _temp = new int[nodeid_max + 1];
+	for(int i=0;i<THREADNUM;i++)
+		ths[i] = new thread(get_length, u, edge_num*2, 2*i, 2*THREADNUM, lock, _temp2, _temp);
 	for(i=0;i<THREADNUM;i++){
-		if(ths[i]->joinable())
-			ths[i]->join();
-	}
-	fin.read(buffer, (edge_num-counter)*8);
-	u = reinterpret_cast<int*>(buffer);
-	for (int64_t i = 0; i < edge_num-counter; i++) {
-		x = *(u + 2 * i);
-		y = *(u + 2 * i + 1);
-		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) )
-			_temp[x]++;
-		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) )
-			_temp[y]++;
+		ths[i]->join();
 	}
 	
+// 	//Round 3, Get offset
+// 	delete[] entire_data;
+// 	mutex* lock = new mutex[nodeid_max/LOCKSHARE + 1];
+// 	int* _temp = new int[nodeid_max + 1]();
+// #if VERBOSE
+// 	cout << "Round 3, Get offset" << endl;
+// #endif
+// 	fin.seekg(0, fin.beg);
+// 	counter = 0;
+// 	i = 0;
+// 	while (counter + BATCHSIZE < edge_num ) {
+// 		if(!thread_state[i]){
+// 			thread_state[i] = true;	
+// 			if (ths[i]->joinable())
+// 				ths[i]->join();
+// 			ths[i]->~thread();
+// 			ths[i] = new thread(loadbatch_R2,this,&fin,_temp,_temp2,lock,thread_state+i);
+// 			counter = counter + BATCHSIZE;
+// 		}
+// 		i = (i+1)%THREADNUM;	
+// 	}
+// 	for(i=0;i<THREADNUM;i++){
+// 		if(ths[i]->joinable())
+// 			ths[i]->join();
+// 	}
+// 	fin.read(buffer, (edge_num-counter)*8);
+// 	u = reinterpret_cast<int*>(buffer);
+// 	for (int64_t i = 0; i < edge_num-counter; i++) {
+// 		x = *(u + 2 * i);
+// 		y = *(u + 2 * i + 1);
+// 		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) )
+// 			_temp[x]++;
+// 		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) )
+// 			_temp[y]++;
+// 	}
+	
+	delete[] entire_data;
 	degree = new int[nodeid_max + 1]();
 	neighboor = new int[edge_num]();
 	offset = new int64_t[nodeid_max +2]();
