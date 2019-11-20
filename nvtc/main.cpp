@@ -37,7 +37,9 @@ int main(int argc, char *argv[]) {
 
 #if TRCOUNTING
     uint64_t result = 0;
+#if TIMECOUNTING
     t->Done("Reading Data");
+#endif
 #if SECONDVERSION
     int64_t cpu_split_target = (int64_t) ((double)(myGraph.offset[myGraph.nodeid_max+1]) * 0.02);
     // Disable cpu coorboration by set cpu_offset = 0;
