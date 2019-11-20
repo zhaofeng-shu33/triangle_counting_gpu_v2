@@ -48,7 +48,9 @@ MyGraph::MyGraph(const char* file_name){
 	fin.seekg(0, fin.beg);
 	
 	//Round 1, Get max id
+#if VERBOSE
 	cout << "Round 1, Get max id" << endl;
+#endif
 	char* entire_data = new char[edge_num*8];
 	fin.read(entire_data, edge_num*8);
 	u = reinterpret_cast<int*>(entire_data);
@@ -61,7 +63,9 @@ MyGraph::MyGraph(const char* file_name){
 	}
 
 	//Round 2, Get node degree, use this to decide where a edge should store
+#if VERBOSE
 	cout << "Round 2, Get degree" << endl;
+#endif
 	int* _temp2 = new int[nodeid_max + 1];
 	for(int i=0;i<THREADNUM;i++)
 		ths[i] = new thread(get_degree, u, edge_num*2, 2*i, 2*THREADNUM, _temp2);
@@ -83,7 +87,9 @@ MyGraph::MyGraph(const char* file_name){
 	delete[] entire_data;
 	mutex* lock = new mutex[nodeid_max + 1];
 	int* _temp = new int[nodeid_max + 1];
+#if VERBOSE
 	cout << "Round 3, Get offset" << endl;
+#endif
 	fin.seekg(0, fin.beg);
 	counter = 0;
 	i = 0;
@@ -122,7 +128,9 @@ MyGraph::MyGraph(const char* file_name){
 	}
 
 	//Round 3, Record neighboors
+#if VERBOSE
 	cout << "Round 4, Record neighboors" << endl;
+#endif
 	fin.seekg(0, fin.beg);
 	counter = 0;
 	i = 0;
@@ -345,5 +353,7 @@ void cpu_counting_edge_first_v2(MyGraph* g, int64_t cpu_offset, int64_t* out){
             }
         }
     *out = sum;
+#if VERBOSE
 	cout<<"CPU Done."<<endl;
+#endif
 }
