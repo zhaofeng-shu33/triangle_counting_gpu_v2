@@ -119,9 +119,9 @@ MyGraph::MyGraph(const char* file_name){
 			_temp[y]++;
 	}
 	
-	degree = new int[nodeid_max + 1];
-	neighboor = new int[edge_num];
-	offset = new int64_t[nodeid_max +2];
+	degree = new int[nodeid_max + 1]();
+	neighboor = new int[edge_num]();
+	offset = new int64_t[nodeid_max +2]();
 	offset[0] = 0;
 	for (int64_t i = 1; i <= nodeid_max+1; i++) {
 		offset[i] = offset[i - 1] + _temp[i - 1];
