@@ -15,7 +15,7 @@
 #define BUFFERSIZE 8192*64
 #define BATCHSIZE BUFFERSIZE/8
 #define INTMAX 2147483647
-#define THREADNUM 8
+#define THREADNUM 12
 #define LOCKSHARE 10
 
 using namespace std;
@@ -90,10 +90,26 @@ MyGraph::MyGraph(const char* file_name){
 		for (int64_t i = edge_num; i <= 2*edge_num; i+=2) {
 			u[i-edge_num+1] = u[i];
 		}
+		#pragma omp parallel for
+		for (int64_t i = 0; i < edge_num; i+=2) {
+			u[edge_num+i/2] = u[i];
+		}
+		#pragma omp parallel for
+		for (int64_t i = 1; i < edge_num; i+=2) {
+			u[edge_num/2*3+i/2] = u[i];
+		}
 	}else{
 		#pragma omp parallel for
 		for (int64_t i = edge_num+1; i <= 2*edge_num; i+=2) {
 			u[i-edge_num] = u[i];
+		}
+		#pragma omp parallel for
+		for (int64_t i = 0; i < edge_num; i+=2) {
+			u[edge_num+i/2] = u[i];
+		}
+		#pragma omp parallel for
+		for (int64_t i = 1; i < edge_num; i+=2) {
+			u[edge_num+edge_num/2+1+i/2] = u[i];
 		}
 	}
 	
@@ -104,8 +120,8 @@ MyGraph::MyGraph(const char* file_name){
 	for (int64_t i = 0; i < nodeid_max+1; i++) {
 		degree[i] =  _temp[i];
 	}
-	neighboor = u+edge_num;
-	neighboor_start = u;
+	neighboor = u;
+	neighboor_start = u+edge_num;
 	offset = new int64_t[nodeid_max +2]();
 	offset[0] = 0;
 	for (int64_t i = 1; i <= nodeid_max+1; i++) {
@@ -138,20 +154,12 @@ MyGraph::MyGraph(const char* file_name){
 	u = reinterpret_cast<int*>(buffer);
 	int64_t shift;
 	for (int64_t i = 0; i < edge_num-counter; i++) {
-		if((counter+i)*2>=edge_num){
-			if(edge_num%2==0)
-				shift = ((counter+i)*2)-edge_num+1;
-			else
-				shift = ((counter+i)*2)-edge_num;
-		}else{
-			shift = (counter+i)*2;
-		}
 		x = *(u + 2 * i);
 		y = *(u + 2 * i + 1);
 		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) )
-			neighboor[offset[x] + neighboor_start[shift]] = y;
+			neighboor[offset[x] + neighboor_start[counter+i]] = y;
 		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) )
-			neighboor[offset[y] + neighboor_start[shift]] = x;
+			neighboor[offset[y] + neighboor_start[counter+i]] = x;
 	}
 
 
@@ -231,24 +239,16 @@ void loadbatch_R3(MyGraph* G,std::ifstream* fin, int64_t counter, int* _temp2, b
 	int x,y;
 	int64_t shift;
 	for (int j = 0; j < BATCHSIZE; j++) {
-		if((counter+j)*2>=G->edge_num){
-			if(G->edge_num%2==0)
-				shift = ((counter+j)*2)-G->edge_num+1;
-			else
-				shift = ((counter+j)*2)-G->edge_num;
-		}else{
-			shift = (counter+j)*2;
-		}	
 		x = *(u + 2 * j);
 		y = *(u + 2 * j + 1);
 		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) ){
 
-			G->neighboor[G->offset[x] + G->neighboor_start[shift]] = y;
+			G->neighboor[G->offset[x] + G->neighboor_start[counter+j]] = y;
 
 		}
 		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) ){
 
-			G->neighboor[G->offset[y] + G->neighboor_start[shift]] = x;
+			G->neighboor[G->offset[y] + G->neighboor_start[counter+j]] = x;
 
 		}	
 	}
