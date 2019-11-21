@@ -12,7 +12,7 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
-#define BUFFERSIZE 8192*64
+#define BUFFERSIZE 8192*128
 #define BATCHSIZE BUFFERSIZE/8
 #define INTMAX 2147483647
 #define THREADNUM 8
@@ -133,15 +133,15 @@ MyGraph::MyGraph(const char* file_name){
 #if VERBOSE
 	cout << "Round 4, Record neighboors" << endl;
 #endif
-	int batch_num = edge_num/(BATCHSIZE);
-	int residual = edge_num%(BATCHSIZE);
+	int64_t batch_num = edge_num/(BATCHSIZE);
+	int64_t residual = edge_num%(BATCHSIZE);
 	for(int i=0;i<THREADNUM;i++)
 		ths[i] = new thread(loadbatch_R3, this, file_name, batch_num, i, THREADNUM);
 	for(i=0;i<THREADNUM;i++){
 		ths[i]->join();
 	}
 	counter = batch_num*(BATCHSIZE);
-	fin.seekg((int64_t)batch_num*BUFFERSIZE,fin.beg);
+	fin.seekg(batch_num*BUFFERSIZE,fin.beg);
 	fin.read(buffer, residual*8);
 	u = reinterpret_cast<int*>(buffer);
 	int choice, shift;
