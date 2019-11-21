@@ -16,6 +16,8 @@
 #define BATCHSIZE BUFFERSIZE/8
 #define INTMAX 2147483647
 #define THREADNUM 8
+// R4 is an IO-Dense task, slighly more threads can make better use of cpu. 
+#define THREADNUM_R4 10
 #define LOCKSHARE 10
 
 using namespace std;
@@ -38,8 +40,7 @@ MyGraph::MyGraph(const char* file_name){
 	int node_max = 0;
 	//uint THREADNUM = thread::hardware_concurrency();
 	int* node_max_thread = new int[THREADNUM]{0};
-	thread* ths[THREADNUM];
-	bool* thread_state = new bool[THREADNUM]{false};
+	thread* ths[THREADNUM_R4];
 	int i = 0;
 
 	// Compute edge num by file length
@@ -135,9 +136,9 @@ MyGraph::MyGraph(const char* file_name){
 #endif
 	int64_t batch_num = edge_num/(BATCHSIZE);
 	int64_t residual = edge_num%(BATCHSIZE);
-	for(int i=0;i<THREADNUM;i++)
-		ths[i] = new thread(loadbatch_R3, this, file_name, batch_num, i, THREADNUM);
-	for(i=0;i<THREADNUM;i++){
+	for(int i=0;i<THREADNUM_R4;i++)
+		ths[i] = new thread(loadbatch_R3, this, file_name, batch_num, i, THREADNUM_R4);
+	for(i=0;i<THREADNUM_R4;i++){
 		ths[i]->join();
 	}
 	counter = batch_num*(BATCHSIZE);
