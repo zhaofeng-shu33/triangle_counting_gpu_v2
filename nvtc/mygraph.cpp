@@ -79,7 +79,7 @@ MyGraph::MyGraph(const char* file_name){
 	cout << "Round 3, Get offset" << endl;
 #endif
 	mutex* lock = new mutex[nodeid_max/LOCKSHARE + 1];
-	int* _temp = new int[nodeid_max + 1];
+	int* _temp = new int[nodeid_max + 1]();
 	for(int i=0;i<THREADNUM;i++)
 		ths[i] = new thread(get_length, u, edge_num*2, 2*i, 2*THREADNUM, lock, _temp2, _temp);
 	for(i=0;i<THREADNUM;i++){
@@ -152,14 +152,19 @@ MyGraph::MyGraph(const char* file_name){
 	}
 	fin.read(buffer, (edge_num-counter)*8);
 	u = reinterpret_cast<int*>(buffer);
-	int64_t shift;
+	int choice, shift;
 	for (int64_t i = 0; i < edge_num-counter; i++) {
 		x = *(u + 2 * i);
 		y = *(u + 2 * i + 1);
-		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) )
-			neighboor[offset[x] + neighboor_start[counter+i]] = y;
-		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) )
-			neighboor[offset[y] + neighboor_start[counter+i]] = x;
+		if (x==y) continue;
+		choice = neighboor_start[counter+i]%2;
+		shift = neighboor_start[counter+i]>>1;
+		if( choice==0 ){
+			neighboor[offset[x] + shift] = y;
+		}
+		else{
+			neighboor[offset[y] + shift] = x;
+		}
 	}
 
 
@@ -217,12 +222,12 @@ void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, 
 		y = *(u + i + 1);
 		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) ){
 			lock[x/LOCKSHARE].lock();
-			*(u + i) = _temp[x]++;
+			*(u + i) = (_temp[x]++)<<1;
 			lock[x/LOCKSHARE].unlock();
 		}
 		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) ){
 			lock[y/LOCKSHARE].lock();
-			*(u + i) = _temp[y]++;
+			*(u + i) = ((_temp[y]++)<<1)+1;
 			lock[y/LOCKSHARE].unlock();
 		}	
 	}
@@ -237,19 +242,18 @@ void loadbatch_R3(MyGraph* G,std::ifstream* fin, int64_t counter, int* _temp2, b
 	G->fin_lock.unlock();
 	int* u = reinterpret_cast<int*>(buffer);
 	int x,y;
-	int64_t shift;
+	int choice,shift;
 	for (int j = 0; j < BATCHSIZE; j++) {
 		x = *(u + 2 * j);
 		y = *(u + 2 * j + 1);
-		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) ){
-
-			G->neighboor[G->offset[x] + G->neighboor_start[counter+j]] = y;
-
+		if (x==y) continue;
+		choice = G->neighboor_start[counter+j]%2;
+		shift = G->neighboor_start[counter+j]>>1;
+		if( choice==0 ){
+			G->neighboor[G->offset[x] + shift] = y;
 		}
-		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) ){
-
-			G->neighboor[G->offset[y] + G->neighboor_start[counter+j]] = x;
-
+		else{
+			G->neighboor[G->offset[y] + shift] = x;
 		}	
 	}
 	*state = false;
