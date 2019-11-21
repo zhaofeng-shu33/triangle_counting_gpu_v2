@@ -291,10 +291,10 @@ uint64_t GpuForward_v2(const MyGraph& myGraph){
     uint64_t result = SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
     return result;
 }
-int GetSplitNum(int num_nodes, uint64_t num_edges, int64_t cpu_offset) {
+int GetSplitNum(int num_nodes, uint64_t num_edges) {
   uint64_t mem = (uint64_t)GlobalMemory();  // in Byte
   mem -= (uint64_t)num_nodes * 16;  // uint64_t
-  return (1 + 12 * (num_edges-cpu_offset) / mem);
+  return (1 + 12 * (num_edges) / mem);
 }
 uint64_t GpuForwardSplit_v2(const MyGraph& myGraph, int split_num, int64_t cpu_offset){
   CUCHECK(cudaSetDevice(0));
@@ -302,7 +302,7 @@ uint64_t GpuForwardSplit_v2(const MyGraph& myGraph, int split_num, int64_t cpu_o
   
   // Calculate chunk size
   int64_t* split_offset;
-  int64_t chunk_length_max = get_split_v2(myGraph.offset, myGraph.nodeid_max, split_num, cpu_offset, split_offset);
+  int64_t chunk_length_max = get_split_v2(myGraph.offset, myGraph.nodeid_max, split_num, split_offset);
 
   // Call mem
   int64_t* dev_offset;
@@ -334,22 +334,18 @@ uint64_t GpuForwardSplit_v2(const MyGraph& myGraph, int split_num, int64_t cpu_o
   cudaSetDevice(0);
   cudaFuncSetCacheConfig(CalculateTrianglesSplit_v2, cudaFuncCachePreferL1);
   int64_t result=0;
-  for(int i=0; i<split_num; i++){
+  for(int i=0; i<split_num && split_offset[i]<cpu_offset; i++){
     for(int j=0; j<split_num;j++){
       CUCHECK(cudaMemcpyAsync(
         dev_neighbor_i, myGraph.neighboor+split_offset[i], (split_offset[i+1]-split_offset[i])*sizeof(int), cudaMemcpyHostToDevice));
-      //CUCHECK(cudaDeviceSynchronize());
       CUCHECK(cudaMemcpyAsync(
         dev_neighbor_start_i, myGraph.neighboor_start+split_offset[i], (split_offset[i+1]-split_offset[i])*sizeof(int), cudaMemcpyHostToDevice));
-      //CUCHECK(cudaDeviceSynchronize());
       CUCHECK(cudaMemcpyAsync(
         dev_neighbor_j, myGraph.neighboor+split_offset[j], (split_offset[j+1]-split_offset[j])*sizeof(int), cudaMemcpyHostToDevice));
-      // CUCHECK(cudaDeviceSynchronize());
-      // CUCHECK(cudaMemcpyAsync(
-      //   dev_neighbor_start_j, myGraph.neighboor_start+split_offset[j], (split_offset[j+1]-split_offset[j])*sizeof(int), cudaMemcpyHostToDevice));
-      // CUCHECK(cudaDeviceSynchronize());
+
       CalculateTrianglesSplit_v2<<<NUM_BLOCKS, NUM_THREADS>>>(
-        split_offset[i+1]-split_offset[i], dev_offset, dev_length, dev_neighbor_i, dev_neighbor_start_i, dev_neighbor_j, dev_neighbor_start_j, dev_split_offset, i, j, dev_results);
+        cpu_offset>split_offset[i+1]?split_offset[i+1]-split_offset[i]:cpu_offset-split_offset[i],
+        dev_offset, dev_length, dev_neighbor_i, dev_neighbor_start_i, dev_neighbor_j, dev_neighbor_start_j, dev_split_offset, i, j, dev_results);
       CUCHECK(cudaDeviceSynchronize());
       result = result + SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
     }

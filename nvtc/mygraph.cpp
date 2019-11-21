@@ -256,12 +256,12 @@ void loadbatch_R3(MyGraph* G,const char* file_name, int length,int from,int step
 	return;
 }
 
-int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t cpu_offset, int64_t*& out){
+int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t*& out){
 	int64_t max_length = 0;
 	out = new int64_t[split_num+1];
-	out[0] = cpu_offset;
+	out[0] = 0;
 	for(int i=1;i<split_num;i++){
-		int64_t target = out[i-1]+(offset[nodeid_max+1]-cpu_offset)/split_num;
+		int64_t target = out[i-1]+(offset[nodeid_max+1])/split_num;
 		out[i] = *lower_bound(offset,offset+nodeid_max+2,target);
 	}
 	out[split_num] = offset[nodeid_max+1];
@@ -271,14 +271,14 @@ int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t cpu
 	}
 	return max_length;
 }
-void cpu_counting_edge_first_v2(MyGraph* g, int64_t cpu_offset, int64_t* out){
+void cpu_counting_edge_first_v2(MyGraph* g, int64_t offset_start, int64_t* out){
     int64_t sum=0;
     int iit = 0;
     int jit = 0;
     int d = 0;
     int i,j;
     #pragma omp parallel for schedule(dynamic,1024) reduction(+:sum) private(iit,jit,d,i,j)
-    for (int64_t k=0;k<cpu_offset;k++){
+    for (int64_t k=offset_start;k<g->offset[g->nodeid_max+1];k++){
         i = g->neighboor_start[k];
         j = g->neighboor[k];
         if(j==INTMAX)
@@ -301,6 +301,7 @@ void cpu_counting_edge_first_v2(MyGraph* g, int64_t cpu_offset, int64_t* out){
             }
         }
     *out = sum;
+	cout<<"CPU Done."<<endl;
 #if VERBOSE
 	cout<<"CPU Done."<<endl;
 #endif

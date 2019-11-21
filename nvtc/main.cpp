@@ -28,17 +28,18 @@ int main(int argc, char *argv[]) {
 #if TIMECOUNTING
     t->Done("Reading Data");
 #endif
-    int64_t cpu_split_target = (int64_t) ((double)(myGraph.offset[myGraph.nodeid_max+1]) * 0.02);
-    // Disable cpu coorboration by set cpu_offset = 0;
-    int64_t cpu_offset = 0;// *lower_bound(myGraph.offset,myGraph.offset+myGraph.nodeid_max+2,cpu_split_target);
-    int split_num = GetSplitNum(myGraph.nodeid_max,myGraph.offset[myGraph.nodeid_max+1],cpu_offset);
-    //cout<<"GPU Split Num: "<<split_num<<endl;
+    // Compute Split Information
+    int split_num = GetSplitNum(myGraph.nodeid_max,myGraph.offset[myGraph.nodeid_max+1]);
+    int64_t* split_offset;
+    int64_t chunk_length_max = get_split_v2(myGraph.offset, myGraph.nodeid_max, split_num, split_offset);
+    
+    // Last k% edges will be calculated by cpu.
+    int64_t cpu_offset = (int64_t) ((double)(myGraph.offset[myGraph.nodeid_max+1]) * (1-0.05));
     if (split_num>1){
         int64_t cpu_result = 0;
-        //cout<<"CPU Task: "<<cpu_offset<<"/"<<myGraph.offset[myGraph.nodeid_max+1]<<" Start..."<<endl;
         thread cpu_thread(cpu_counting_edge_first_v2,&myGraph,cpu_offset,&cpu_result);
         result = GpuForwardSplit_v2(myGraph,split_num,cpu_offset);
-        //cout<<"GPU Done."<<endl;
+        cout<<"GPU Done."<<endl;
         cpu_thread.join();
         result = result + cpu_result;
     }
