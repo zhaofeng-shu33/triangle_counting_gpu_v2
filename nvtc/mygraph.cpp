@@ -207,21 +207,38 @@ void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2){
 		temp2[u[i+1]]++;
 	}
 }
+// _temp是一个计数器，用来记录这个节点下分配了多少条边，同时对某条边就是稍后实际写入时的相对位置
 void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, int* _temp2, int* _temp){
 	int x,y;
-	for(int64_t i = from;i<length;i+=step){
+	for (int64_t i = from; i < length; i += step) {
 		x = *(u + i);
 		y = *(u + i + 1);
-		if( x!=y && (_temp2[x]<_temp2[y] || (_temp2[x]==_temp2[y] && x<y) ) ){
+		if (x == y)
+		    continue;
+		if(_temp2[x] < _temp2[y] ) {
 			lock[x/LOCKSHARE].lock();
-			*(u + i) = (_temp[x]++)<<1;
+			*(u + i) = _temp[x] << 1; // 最后一位记录要分到哪个节点下面
+		    _temp[x]++;
 			lock[x/LOCKSHARE].unlock();
 		}
-		if( x!=y && (_temp2[x]>_temp2[y] || (_temp2[x]==_temp2[y] && x>y) ) ){
+		else if (_temp2[x] > _temp2[y]) {
 			lock[y/LOCKSHARE].lock();
-			*(u + i) = ((_temp[y]++)<<1)+1;
+			*(u + i) = (_temp[y] << 1) + 1;
+			_temp[y]++;
 			lock[y/LOCKSHARE].unlock();
-		}	
+		}
+		else if (x < y) {
+			lock[x/LOCKSHARE].lock();
+			*(u + i) = _temp[x] << 1;
+			_temp[x]++;
+			lock[x/LOCKSHARE].unlock();
+		}
+		else {
+			lock[y/LOCKSHARE].lock();
+			*(u + i) = (_temp[y] << 1) + 1;
+			_temp[y]++;
+			lock[y/LOCKSHARE].unlock();
+		}
 	}
 }
 
