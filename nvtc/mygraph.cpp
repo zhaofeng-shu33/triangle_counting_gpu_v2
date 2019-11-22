@@ -215,27 +215,27 @@ void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, 
 		y = *(u + i + 1);
 		if (x == y)
 		    continue;
-		if(_temp2[x]<_temp2[y] ) {
-			*(u + i) = _temp[x] << 1; // 最后一位记录要分到哪个节点下面
+		if(_temp2[x] < _temp2[y] ) {
 			lock[x/LOCKSHARE].lock();
-			_temp[x]++;
+			*(u + i) = _temp[x] << 1; // 最后一位记录要分到哪个节点下面
+		    _temp[x]++;
 			lock[x/LOCKSHARE].unlock();
 		}
-		else if (_temp2[x]>_temp2[y]) {
-			*(u + i) = (_temp[y] << 1) + 1;
+		else if (_temp2[x] > _temp2[y]) {
 			lock[y/LOCKSHARE].lock();
+			*(u + i) = (_temp[y] << 1) + 1;
 			_temp[y]++;
 			lock[y/LOCKSHARE].unlock();
 		}
 		else if (x < y) {
-			*(u + i) = _temp[x] << 1;
 			lock[x/LOCKSHARE].lock();
+			*(u + i) = _temp[x] << 1;
 			_temp[x]++;
 			lock[x/LOCKSHARE].unlock();
 		}
 		else {
-			*(u + i) = (_temp[y] << 1) + 1;
 			lock[y/LOCKSHARE].lock();
+			*(u + i) = (_temp[y] << 1) + 1;
 			_temp[y]++;
 			lock[y/LOCKSHARE].unlock();
 		}
