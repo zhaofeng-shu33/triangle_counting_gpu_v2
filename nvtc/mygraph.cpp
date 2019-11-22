@@ -224,7 +224,7 @@ void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, 
 		else if (_temp2[x]>_temp2[y]) {
 			*(u + i) = (_temp[y] << 1) + 1;
 			lock[y/LOCKSHARE].lock();
-			_temp[y]++
+			_temp[y]++;
 			lock[y/LOCKSHARE].unlock();
 		}
 		else if (x < y) {
@@ -236,7 +236,7 @@ void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, 
 		else {
 			*(u + i) = (_temp[y] << 1) + 1;
 			lock[y/LOCKSHARE].lock();
-			_temp[y]++
+			_temp[y]++;
 			lock[y/LOCKSHARE].unlock();
 		}
 	}
