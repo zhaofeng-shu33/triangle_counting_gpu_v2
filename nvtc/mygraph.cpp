@@ -71,7 +71,7 @@ MyGraph::MyGraph(const char* file_name){
 #endif
 	int* _temp2 = new int[nodeid_max + 1]();
 	for(int i=0;i<THREADNUM;i++)
-		ths[i] = new thread(get_degree, u, edge_num*2, 2*i, 2*THREADNUM, _temp2);
+		ths[i] = new thread(get_degree, u, edge_num*2, 2*i, 6*THREADNUM, _temp2);
 	for(i=0;i<THREADNUM;i++){
 		ths[i]->join();
 	}
