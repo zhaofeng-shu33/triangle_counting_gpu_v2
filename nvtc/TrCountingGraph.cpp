@@ -21,8 +21,8 @@ struct GET_LENGTH_ARGS {
 	int64_t from;
 	int64_t step;
 	pthread_mutex_t* lock;
-	int* _temp2;
-	int* _temp;
+	int* degree_estimation;
+	int* pointer;
 };
 
 struct BATCH_R4_ARGS {
@@ -88,13 +88,13 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 #if VERBOSE
 	printf("Round 2, Get degree\n");
 #endif
-	int* _temp2;
-	_temp2 = (int*)malloc(sizeof(int) * (tr_graph->nodeid_max + 1));
-	memset(_temp2, 0, sizeof(int) * (tr_graph->nodeid_max + 1));
+	int* degree_estimation;
+	degree_estimation = (int*)malloc(sizeof(int) * (tr_graph->nodeid_max + 1));
+	memset(degree_estimation, 0, sizeof(int) * (tr_graph->nodeid_max + 1));
 	#pragma omp parallel for
 	for (int64_t i = 0; i < tr_graph->edge_num * 2; i += 6) {
-		_temp2[u[i]]++;
-		_temp2[u[i+1]]++;
+		degree_estimation[u[i]]++;
+		degree_estimation[u[i+1]]++;
 	}
 
 	//Round 3, Get offset
@@ -106,12 +106,12 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	for(int i = 0; i < num_of_thread_locks; i++) {
 		pthread_mutex_init(&lock[i], NULL);
 	}
-	int* _temp;
-	_temp = (int*)malloc(sizeof(int) * (tr_graph->nodeid_max + 1));
-	memset(_temp, 0, sizeof(int) * (tr_graph->nodeid_max + 1));
+	int* pointer;
+	pointer = (int*)malloc(sizeof(int) * (tr_graph->nodeid_max + 1));
+	memset(pointer, 0, sizeof(int) * (tr_graph->nodeid_max + 1));
 	struct GET_LENGTH_ARGS gen_length_args_array[THREADNUM];	
 	for (int i = 0; i < THREADNUM; i++) {
-		gen_length_args_array[i] = {u, tr_graph->edge_num * 2, 2 * i, 2*THREADNUM, lock, _temp2, _temp};
+		gen_length_args_array[i] = {u, tr_graph->edge_num * 2, 2 * i, 2*THREADNUM, lock, degree_estimation, pointer};
 		pthread_create(&ths[i], NULL, get_length, (void *)&gen_length_args_array[i]);
 	}
 
@@ -156,7 +156,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 
 	#pragma omp parallel for
 	for (int64_t i = 0; i < tr_graph->nodeid_max+1; i++) {
-		tr_graph->degree[i] =  _temp[i];
+		tr_graph->degree[i] =  pointer[i];
 	}
 	tr_graph->neighboor = u;
 	tr_graph->neighboor_start = u + tr_graph->edge_num;
@@ -164,7 +164,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	memset(tr_graph->offset, 0, sizeof(int64_t) * (tr_graph->nodeid_max + 2));
 	tr_graph->offset[0] = 0;
 	for (int64_t i = 1; i <= tr_graph->nodeid_max + 1; i++) {
-		tr_graph->offset[i] = tr_graph->offset[i - 1] + _temp[i - 1];
+		tr_graph->offset[i] = tr_graph->offset[i - 1] + pointer[i - 1];
 	}
 
 	//Round 4, Record neighboors
@@ -208,14 +208,14 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 			tr_graph->neighboor_start[start+j] = i;
 	}
 
-	sort_neighboor(tr_graph, _temp);
+	sort_neighboor(tr_graph, pointer);
 
 	#pragma omp parallel for
 	for (int64_t i = 0; i <= tr_graph->nodeid_max; i++) {
 		int m, n;
-		if (_temp[i] > 1) {
-			for (m = 0; m < _temp[i];) {
-				for(n=m+1;n<_temp[i] && tr_graph->neighboor[tr_graph->offset[i]+m] == tr_graph->neighboor[tr_graph->offset[i]+n];n++){
+		if (pointer[i] > 1) {
+			for (m = 0; m < pointer[i];) {
+				for(n=m+1;n<pointer[i] && tr_graph->neighboor[tr_graph->offset[i]+m] == tr_graph->neighboor[tr_graph->offset[i]+n];n++){
 					tr_graph->degree[i]--;
 					tr_graph->neighboor[tr_graph->offset[i]+n] = INTMAX;
 				}
@@ -223,7 +223,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 			}
 		}
 	}
-	sort_neighboor(tr_graph, _temp);
+	sort_neighboor(tr_graph, pointer);
 }
 
 void sort_neighboor(TrCountingGraph* g, int* d) {
@@ -233,8 +233,8 @@ void sort_neighboor(TrCountingGraph* g, int* d) {
 	}
 }
 
-// _temp 是一个计数器，用来记录这个节点下分配了多少条边，同时对某条边就是稍后实际写入时的相对位置
-// _temp2 是度的估计
+// pointer 是一个计数器，用来记录这个节点下分配了多少条边，同时对某条边就是稍后实际写入时的相对位置
+// degree_estimation 是度的估计
 void* get_length(void* args) {
 	struct GET_LENGTH_ARGS* gen_len_args = (struct GET_LENGTH_ARGS*) args;
 	int* u = gen_len_args->u;
@@ -242,36 +242,36 @@ void* get_length(void* args) {
 	int64_t from = gen_len_args->from;
 	int64_t step = gen_len_args->step;
 	pthread_mutex_t* lock = gen_len_args->lock;
-	int* _temp2 = gen_len_args->_temp2;
-	int* _temp = gen_len_args->_temp;
+	int* degree_estimation = gen_len_args->degree_estimation;
+	int* pointer = gen_len_args->pointer;
 	int x,y;
 	for (int64_t i = from; i < length; i += step) {
 		x = *(u + i);
 		y = *(u + i + 1);
 		if (x == y)
 		    continue;
-		if(_temp2[x] < _temp2[y] ) {
+		if(degree_estimation[x] < degree_estimation[y] ) {
 			pthread_mutex_lock(&lock[x/LOCKSHARE]);
-			*(u + i) = _temp[x] << 1; // 最后一位记录要分到哪个节点下面
-		    _temp[x]++;
+			*(u + i) = pointer[x] << 1; // 最后一位记录要分到哪个节点下面
+		    pointer[x]++;
 			pthread_mutex_unlock(&lock[x/LOCKSHARE]);
 		}
-		else if (_temp2[x] > _temp2[y]) {
+		else if (degree_estimation[x] > degree_estimation[y]) {
 			pthread_mutex_lock(&lock[y/LOCKSHARE]);
-			*(u + i) = (_temp[y] << 1) + 1;
-			_temp[y]++;
+			*(u + i) = (pointer[y] << 1) + 1;
+			pointer[y]++;
 			pthread_mutex_unlock(&lock[y/LOCKSHARE]);
 		}
 		else if (x < y) {
 			pthread_mutex_lock(&lock[x/LOCKSHARE]);
-			*(u + i) = _temp[x] << 1;
-			_temp[x]++;
+			*(u + i) = pointer[x] << 1;
+			pointer[x]++;
 			pthread_mutex_unlock(&lock[x/LOCKSHARE]);
 		}
 		else {
 			pthread_mutex_lock(&lock[y/LOCKSHARE]);
-			*(u + i) = (_temp[y] << 1) + 1;
-			_temp[y]++;
+			*(u + i) = (pointer[y] << 1) + 1;
+			pointer[y]++;
 			pthread_mutex_unlock(&lock[y/LOCKSHARE]);
 		}
 	}
