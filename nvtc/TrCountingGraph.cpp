@@ -62,7 +62,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	int node_max = 0;
 	//uint THREADNUM = thread::hardware_concurrency();
 	int* node_max_thread = new int[THREADNUM]{0};
-	pthread_t* ths[THREADNUM_R4];
+	pthread_t ths[THREADNUM_R4];
 	int i = 0;
 
 	// Compute edge num by file length
@@ -109,10 +109,10 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	struct GET_LENGTH_ARGS gen_length_args = {u, tr_graph->edge_num * 2, 0, 2*THREADNUM, lock, _temp2, _temp};
 	for (int i = 0; i < THREADNUM; i++) {
 		gen_length_args.from = 2 * i;
-		pthread_create(ths[i], NULL, get_length, (void *)&gen_length_args);
+		pthread_create(&ths[i], NULL, get_length, (void *)&gen_length_args);
 	}
 	for (i = 0; i < THREADNUM; i++) {
-		pthread_join(*ths[i], NULL);
+		pthread_join(ths[i], NULL);
 	}
 	if (tr_graph->edge_num % 2==0) {
 		#pragma omp parallel for
@@ -166,10 +166,10 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	struct BATCH_R4_ARGS batch_r4_args = {tr_graph, file_name, batch_num, 0, THREADNUM_R4};
 	for (int i = 0; i < THREADNUM_R4; i++){
 		batch_r4_args.from = i;
-		pthread_create(ths[i], NULL, loadbatch_R4, (void *)&batch_r4_args);
+		pthread_create(&ths[i], NULL, loadbatch_R4, (void *)&batch_r4_args);
 	}
 	for (i = 0; i < THREADNUM_R4; i++) {
-		pthread_join(*ths[i], NULL);
+		pthread_join(ths[i], NULL);
 	}
 	counter = batch_num*(BATCHSIZE);
 	fseek(pFile, batch_num * BUFFERSIZE, SEEK_SET);
