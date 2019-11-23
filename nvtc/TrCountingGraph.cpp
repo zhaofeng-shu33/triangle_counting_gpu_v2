@@ -59,22 +59,22 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	tr_graph->entire_data = new char[tr_graph->edge_num * 8];
 	fread(tr_graph->entire_data, 2 * sizeof(int), tr_graph->edge_num, pFile);
 	u = reinterpret_cast<int*>(tr_graph->entire_data);
-	for (int i = 0;i < THREADNUM; i++)
-		ths[i] = new thread(get_max, u, tr_graph->edge_num * 2, i, THREADNUM, node_max_thread+i);
-	for (i = 0; i < THREADNUM; i++) {
-		ths[i]->join();
-		if (node_max_thread[i] > tr_graph->nodeid_max)
-			tr_graph->nodeid_max = node_max_thread[i];
+	int max_node_id = 0;
+	#pragma omp parallel for reduction(max:max_node_id)
+	for(int64_t i = 0; i < tr_graph->edge_num * 2; i += 1) {
+		if(max_node_id < u[i])
+			max_node_id = u[i];
 	}
+	tr_graph->nodeid_max = max_node_id;
 
 	//Round 2, Get node degree, use this to decide where a edge should store
 #if VERBOSE
 	printf("Round 2, Get degree\n");
 #endif
 	int* _temp2 = new int[tr_graph->nodeid_max + 1]();
-	for(int i=0;i<THREADNUM;i++)
+	for(int i = 0; i < THREADNUM; i++)
 		ths[i] = new thread(get_degree, u, tr_graph->edge_num * 2, 2 * i, 6*THREADNUM, _temp2);
-	for(i=0;i<THREADNUM;i++){
+	for(i = 0; i < THREADNUM; i++) {
 		ths[i]->join();
 	}
 
@@ -86,7 +86,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	int* _temp = new int[tr_graph->nodeid_max + 1]();
 	for (int i = 0; i < THREADNUM; i++)
 		ths[i] = new thread(get_length, u, tr_graph->edge_num * 2, 2*i, 2*THREADNUM, lock, _temp2, _temp);
-	for (i = 0; i < THREADNUM; i++){
+	for (i = 0; i < THREADNUM; i++) {
 		ths[i]->join();
 	}
 	if (tr_graph->edge_num % 2==0) {
@@ -195,14 +195,7 @@ void sort_neighboor(TrCountingGraph* g, int* d) {
 	}
 }
 
-void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out) {
-	int max = 0;
-	for(int64_t i = from;i<length;i+=step){
-		if(u[i]>max)
-			max = u[i];
-	}
-	*out = max;
-}
+
 
 void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2) {
 	for(int64_t i = from;i<length;i+=step){

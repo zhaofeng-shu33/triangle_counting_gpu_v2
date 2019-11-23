@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
     }
     char* file_name = argv[2];
     if (access(file_name, F_OK ) == -1) {
-        printf("file %s file_name does not exist\n");
+        printf("file %s file_name does not exist\n", file_name);
         exit(-1);
     }
     TrCountingGraph TrCountingGraph(file_name);
