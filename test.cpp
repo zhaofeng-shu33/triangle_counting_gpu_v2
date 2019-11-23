@@ -1,5 +1,5 @@
 // Copyright 2019 zhaofeng-shu33
-
+#include <stdio.h>
 #include <gtest/gtest.h>  // NOLINT(build/include_order)
 
 #include <nvtc/TrCountingGraph.h>
