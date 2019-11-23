@@ -7,7 +7,6 @@
 #include <cstdlib>
 #include <stdint.h>
 #include <algorithm>
-#include <chrono>
 #include <thread>
 #include <mutex>
 #define BUFFERSIZE 8192*128
@@ -26,10 +25,13 @@ void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2);
 void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, int* _temp2, int* _temp);
 void loadbatch_R3(TrCountingGraph* G,const char* file_name, int length,int from,int step);
 
+TrCountingGraph::TrCountingGraph(const char* file_name) {
+	construct_trCountingGraph(this, file_name);
+}
 
-TrCountingGraph::TrCountingGraph(const char* file_name){
+void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name){
 	// Temporal variables
-    std::ifstream fin;
+    ifstream fin;
 	char buffer[BUFFERSIZE];
 	char u_array[4], v_array[4];
 	int64_t counter = 0;
@@ -44,32 +46,32 @@ TrCountingGraph::TrCountingGraph(const char* file_name){
 	// Compute edge num by file length
 	fin.open(file_name, ifstream::binary | ifstream::in);
 	fin.seekg(0, fin.end);
-	edge_num = fin.tellg()/8;
+	tr_graph->edge_num = fin.tellg()/8;
 	fin.seekg(0, fin.beg);
 	
 	//Round 1, Get max id
 #if VERBOSE
 	printf("Round 1, Get max id");
 #endif
-	nodeid_max = 0;
-	entire_data = new char[edge_num*8];
-	fin.read(entire_data, edge_num*8);
-	u = reinterpret_cast<int*>(entire_data);
-	for(int i=0;i<THREADNUM;i++)
-		ths[i] = new thread(get_max, u, edge_num*2, i, THREADNUM, node_max_thread+i);
-	for(i=0;i<THREADNUM;i++){
+	tr_graph->nodeid_max = 0;
+	tr_graph->entire_data = new char[tr_graph->edge_num * 8];
+	fin.read(tr_graph->entire_data, tr_graph->edge_num * 8);
+	u = reinterpret_cast<int*>(tr_graph->entire_data);
+	for (int i = 0;i < THREADNUM; i++)
+		ths[i] = new thread(get_max, u, tr_graph->edge_num * 2, i, THREADNUM, node_max_thread+i);
+	for (i = 0; i < THREADNUM; i++) {
 		ths[i]->join();
-		if(node_max_thread[i]>nodeid_max)
-			nodeid_max = node_max_thread[i];
+		if (node_max_thread[i] > tr_graph->nodeid_max)
+			tr_graph->nodeid_max = node_max_thread[i];
 	}
 
 	//Round 2, Get node degree, use this to decide where a edge should store
 #if VERBOSE
 	printf("Round 2, Get degree\n");
 #endif
-	int* _temp2 = new int[nodeid_max + 1]();
+	int* _temp2 = new int[tr_graph->nodeid_max + 1]();
 	for(int i=0;i<THREADNUM;i++)
-		ths[i] = new thread(get_degree, u, edge_num*2, 2*i, 6*THREADNUM, _temp2);
+		ths[i] = new thread(get_degree, u, tr_graph->edge_num * 2, 2 * i, 6*THREADNUM, _temp2);
 	for(i=0;i<THREADNUM;i++){
 		ths[i]->join();
 	}
@@ -78,64 +80,64 @@ TrCountingGraph::TrCountingGraph(const char* file_name){
 #if VERBOSE
 	printf("Round 3, Get offset");
 #endif
-	mutex* lock = new mutex[nodeid_max/LOCKSHARE + 1];
-	int* _temp = new int[nodeid_max + 1]();
+	mutex* lock = new mutex[tr_graph->nodeid_max/LOCKSHARE + 1];
+	int* _temp = new int[tr_graph->nodeid_max + 1]();
 	for(int i=0;i<THREADNUM;i++)
-		ths[i] = new thread(get_length, u, edge_num*2, 2*i, 2*THREADNUM, lock, _temp2, _temp);
+		ths[i] = new thread(get_length, u, tr_graph->edge_num * 2, 2*i, 2*THREADNUM, lock, _temp2, _temp);
 	for(i=0;i<THREADNUM;i++){
 		ths[i]->join();
 	}
-	if(edge_num%2==0){
+	if(tr_graph->edge_num % 2==0){
 		#pragma omp parallel for
-		for (int64_t i = edge_num; i <= 2*edge_num; i+=2) {
-			u[i-edge_num+1] = u[i];
+		for (int64_t i = tr_graph->edge_num; i <= 2 * tr_graph->edge_num; i+=2) {
+			u[i - tr_graph->edge_num + 1] = u[i];
 		}
 		#pragma omp parallel for
-		for (int64_t i = 0; i < edge_num; i+=2) {
-			u[edge_num+i/2] = u[i];
+		for (int64_t i = 0; i < tr_graph->edge_num; i+=2) {
+			u[tr_graph->edge_num + i/2] = u[i];
 		}
 		#pragma omp parallel for
-		for (int64_t i = 1; i < edge_num; i+=2) {
-			u[edge_num/2*3+i/2] = u[i];
+		for (int64_t i = 1; i < tr_graph->edge_num; i+=2) {
+			u[tr_graph->edge_num/2*3+i/2] = u[i];
 		}
 	}else{
 		#pragma omp parallel for
-		for (int64_t i = edge_num+1; i <= 2*edge_num; i+=2) {
-			u[i-edge_num] = u[i];
+		for (int64_t i = tr_graph->edge_num+1; i <= 2 * tr_graph->edge_num; i+=2) {
+			u[i - tr_graph->edge_num] = u[i];
 		}
 		#pragma omp parallel for
-		for (int64_t i = 0; i < edge_num; i+=2) {
-			u[edge_num+i/2] = u[i];
+		for (int64_t i = 0; i < tr_graph->edge_num; i+=2) {
+			u[tr_graph->edge_num+i/2] = u[i];
 		}
 		#pragma omp parallel for
-		for (int64_t i = 1; i < edge_num; i+=2) {
-			u[edge_num+edge_num/2+1+i/2] = u[i];
+		for (int64_t i = 1; i < tr_graph->edge_num; i+=2) {
+			u[tr_graph->edge_num + tr_graph->edge_num/2+1+i/2] = u[i];
 		}
 	}
 	
 	//delete[] entire_data;
 	delete [] lock;
-	degree = new int[nodeid_max + 1]();
+	tr_graph->degree = new int[tr_graph->nodeid_max + 1]();
 	#pragma omp parallel for
-	for (int64_t i = 0; i < nodeid_max+1; i++) {
-		degree[i] =  _temp[i];
+	for (int64_t i = 0; i < tr_graph->nodeid_max+1; i++) {
+		tr_graph->degree[i] =  _temp[i];
 	}
-	neighboor = u;
-	neighboor_start = u+edge_num;
-	offset = new int64_t[nodeid_max +2]();
-	offset[0] = 0;
-	for (int64_t i = 1; i <= nodeid_max+1; i++) {
-		offset[i] = offset[i - 1] + _temp[i - 1];
+	tr_graph->neighboor = u;
+	tr_graph->neighboor_start = u + tr_graph->edge_num;
+	tr_graph->offset = new int64_t[tr_graph->nodeid_max +2]();
+	tr_graph->offset[0] = 0;
+	for (int64_t i = 1; i <= tr_graph->nodeid_max + 1; i++) {
+		tr_graph->offset[i] = tr_graph->offset[i - 1] + _temp[i - 1];
 	}
 
 	//Round 4, Record neighboors
 #if VERBOSE
 	printf("Round 4, Record neighboors");
 #endif
-	int64_t batch_num = edge_num/(BATCHSIZE);
-	int64_t residual = edge_num%(BATCHSIZE);
+	int64_t batch_num = tr_graph->edge_num/(BATCHSIZE);
+	int64_t residual = tr_graph->edge_num%(BATCHSIZE);
 	for(int i=0;i<THREADNUM_R4;i++)
-		ths[i] = new thread(loadbatch_R3, this, file_name, batch_num, i, THREADNUM_R4);
+		ths[i] = new thread(loadbatch_R3, tr_graph, file_name, batch_num, i, THREADNUM_R4);
 	for(i=0;i<THREADNUM_R4;i++){
 		ths[i]->join();
 	}
@@ -144,43 +146,43 @@ TrCountingGraph::TrCountingGraph(const char* file_name){
 	fin.read(buffer, residual*8);
 	u = reinterpret_cast<int*>(buffer);
 	int choice, shift;
-	for (int64_t i = 0; i < edge_num-counter; i++) {
+	for (int64_t i = 0; i < tr_graph->edge_num-counter; i++) {
 		x = *(u + 2 * i);
 		y = *(u + 2 * i + 1);
 		if (x==y) continue;
-		choice = neighboor_start[counter+i]%2;
-		shift = neighboor_start[counter+i]>>1;
+		choice = tr_graph->neighboor_start[counter+i]%2;
+		shift = tr_graph->neighboor_start[counter+i]>>1;
 		if( choice==0 ){
-			neighboor[offset[x] + shift] = y;
+			tr_graph->neighboor[tr_graph->offset[x] + shift] = y;
 		}
 		else{
-			neighboor[offset[y] + shift] = x;
+			tr_graph->neighboor[tr_graph->offset[y] + shift] = x;
 		}
 	}
 
 	#pragma omp parallel for
-	for (int64_t i = 0; i <= nodeid_max; i++) {
-		int64_t start = offset[i];
-		for (int j=0; j<degree[i];j++)
-			neighboor_start[start+j] = i;
+	for (int64_t i = 0; i <= tr_graph->nodeid_max; i++) {
+		int64_t start = tr_graph->offset[i];
+		for (int j=0; j < tr_graph->degree[i];j++)
+			tr_graph->neighboor_start[start+j] = i;
 	}
 
-	sort_neighboor(this, _temp);
+	sort_neighboor(tr_graph, _temp);
 
 	#pragma omp parallel for
-	for (int64_t i = 0; i <= nodeid_max; i++) {
+	for (int64_t i = 0; i <= tr_graph->nodeid_max; i++) {
 		int m,n;
-		if (_temp[i]>1){
-			for(m=0;m<_temp[i];){
-				for(n=m+1;n<_temp[i] && neighboor[offset[i]+m]==neighboor[offset[i]+n];n++){
-					degree[i]--;
-					neighboor[offset[i]+n] = INTMAX;
+		if (_temp[i] > 1) {
+			for (m = 0; m < _temp[i];) {
+				for(n=m+1;n<_temp[i] && tr_graph->neighboor[tr_graph->offset[i]+m] == tr_graph->neighboor[tr_graph->offset[i]+n];n++){
+					tr_graph->degree[i]--;
+					tr_graph->neighboor[tr_graph->offset[i]+n] = INTMAX;
 				}
 				m = n;
 			}
 		}
 	}
-	sort_neighboor(this, _temp);
+	sort_neighboor(tr_graph, _temp);
 }
 
 void sort_neighboor(TrCountingGraph* g, int* d) {
@@ -240,7 +242,7 @@ void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, 
 }
 
 void loadbatch_R3(TrCountingGraph* G,const char* file_name, int length,int from,int step){
-	std::ifstream fin;
+	ifstream fin;
 	fin.open(file_name, ifstream::binary | ifstream::in);
 	int64_t start = 0;
 	char buffer[BUFFERSIZE];
