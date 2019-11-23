@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 #if TIMECOUNTING 
     unique_ptr<Timer> t(Timer::NewTimer());
 #endif
-    MyGraph myGraph(argv[2]);
+    TrCountingGraph TrCountingGraph(argv[2]);
 
 #if TRCOUNTING
     uint64_t result = 0;
@@ -27,22 +27,22 @@ int main(int argc, char *argv[]) {
     t->Done("Reading Data");
 #endif
     // Compute Split Information
-    int split_num = GetSplitNum(myGraph.nodeid_max,myGraph.offset[myGraph.nodeid_max+1]);
+    int split_num = GetSplitNum(TrCountingGraph.nodeid_max,TrCountingGraph.offset[TrCountingGraph.nodeid_max+1]);
     int64_t* split_offset;
-    int64_t chunk_length_max = get_split_v2(myGraph.offset, myGraph.nodeid_max, split_num, split_offset);
+    int64_t chunk_length_max = get_split_v2(TrCountingGraph.offset, TrCountingGraph.nodeid_max, split_num, split_offset);
     
     // Last k% edges will be calculated by cpu.
-    int64_t cpu_offset = (int64_t) ((double)(myGraph.offset[myGraph.nodeid_max+1]) * (1-0.05));
+    int64_t cpu_offset = (int64_t) ((double)(TrCountingGraph.offset[TrCountingGraph.nodeid_max+1]) * (1-0.05));
     if (split_num>1){
         int64_t cpu_result = 0;
-        thread cpu_thread(cpu_counting_edge_first_v2,&myGraph,cpu_offset,&cpu_result);
-        result = GpuForwardSplit_v2(myGraph,split_num,cpu_offset);
+        thread cpu_thread(cpu_counting_edge_first_v2,&TrCountingGraph,cpu_offset,&cpu_result);
+        result = GpuForwardSplit_v2(TrCountingGraph,split_num,cpu_offset);
         cout<<"GPU Done."<<endl;
         cpu_thread.join();
         result = result + cpu_result;
     }
     else{
-        result = GpuForward_v2(myGraph);
+        result = GpuForward_v2(TrCountingGraph);
     }
 #if TIMECOUNTING    
     t->Done("Compute number of triangles");

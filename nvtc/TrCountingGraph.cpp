@@ -1,5 +1,5 @@
-#include "MyGraph.h"
-#include <iostream>
+#include "TrCountingGraph.h"
+#include <stdio.h>
 #include <fstream>
 #include <string>
 #include <cstring>
@@ -25,10 +25,10 @@ void foo(){return;};
 void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out);
 void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2);
 void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, int* _temp2, int* _temp);
-void loadbatch_R3(MyGraph* G,const char* file_name, int length,int from,int step);
+void loadbatch_R3(TrCountingGraph* G,const char* file_name, int length,int from,int step);
 
 
-MyGraph::MyGraph(const char* file_name){
+TrCountingGraph::TrCountingGraph(const char* file_name){
 	// Temporal variables
     std::ifstream fin;
 	char buffer[BUFFERSIZE];
@@ -50,7 +50,7 @@ MyGraph::MyGraph(const char* file_name){
 	
 	//Round 1, Get max id
 #if VERBOSE
-	cout << "Round 1, Get max id" << endl;
+	printf("Round 1, Get max id");
 #endif
 	nodeid_max = 0;
 	entire_data = new char[edge_num*8];
@@ -66,7 +66,7 @@ MyGraph::MyGraph(const char* file_name){
 
 	//Round 2, Get node degree, use this to decide where a edge should store
 #if VERBOSE
-	cout << "Round 2, Get degree" << endl;
+	printf("Round 2, Get degree\n");
 #endif
 	int* _temp2 = new int[nodeid_max + 1]();
 	for(int i=0;i<THREADNUM;i++)
@@ -77,7 +77,7 @@ MyGraph::MyGraph(const char* file_name){
 
 	//Round 3, Get offset
 #if VERBOSE
-	cout << "Round 3, Get offset" << endl;
+	printf("Round 3, Get offset");
 #endif
 	mutex* lock = new mutex[nodeid_max/LOCKSHARE + 1];
 	int* _temp = new int[nodeid_max + 1]();
@@ -131,7 +131,7 @@ MyGraph::MyGraph(const char* file_name){
 
 	//Round 4, Record neighboors
 #if VERBOSE
-	cout << "Round 4, Record neighboors" << endl;
+	printf("Round 4, Record neighboors");
 #endif
 	int64_t batch_num = edge_num/(BATCHSIZE);
 	int64_t residual = edge_num%(BATCHSIZE);
@@ -185,7 +185,7 @@ MyGraph::MyGraph(const char* file_name){
 	sort_neighboor(_temp);
 }
 
-void MyGraph::sort_neighboor(int* d) {
+void TrCountingGraph::sort_neighboor(int* d) {
 #pragma omp parallel for
 	for (int64_t i = 0; i <= nodeid_max; i++) {
 		sort(neighboor + offset[i], neighboor + offset[i] + d[i]);
@@ -241,7 +241,7 @@ void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, 
 	}
 }
 
-void loadbatch_R3(MyGraph* G,const char* file_name, int length,int from,int step){
+void loadbatch_R3(TrCountingGraph* G,const char* file_name, int length,int from,int step){
 	std::ifstream fin;
 	fin.open(file_name, ifstream::binary | ifstream::in);
 	int64_t start = 0;
@@ -287,7 +287,7 @@ int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t*& o
 	}
 	return max_length;
 }
-void cpu_counting_edge_first_v2(MyGraph* g, int64_t offset_start, int64_t* out){
+void cpu_counting_edge_first_v2(TrCountingGraph* g, int64_t offset_start, int64_t* out){
     int64_t sum=0;
     int iit = 0;
     int jit = 0;
