@@ -261,6 +261,7 @@ void* get_length(void* args) {
 			pthread_mutex_unlock(&lock[y/LOCKSHARE]);
 		}
 	}
+	return NULL;
 }
 
 void* loadbatch_R4(void* args){
@@ -296,7 +297,7 @@ void* loadbatch_R4(void* args){
 			}	
 		}
 	}
-	return;
+	return NULL;
 }
 
 int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t*& out){
