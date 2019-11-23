@@ -273,7 +273,7 @@ void* loadbatch_R4(void* args){
 	TrCountingGraph* G = batch_r4_args->G;
 	const char* file_name = batch_r4_args->file_name;
 	int length = batch_r4_args->length;
-	int from = batch_r4_args->length;
+	int from = batch_r4_args->from;
 	int step = batch_r4_args->step;
 	FILE* pFile = fopen(file_name, "rb");
 	int64_t start = 0;
