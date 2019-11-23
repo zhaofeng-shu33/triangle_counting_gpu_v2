@@ -23,7 +23,6 @@ void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2);
 void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, int* _temp2, int* _temp);
 void loadbatch_R3(TrCountingGraph* G,const char* file_name, int length,int from,int step);
 void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name);
-int64_t get_edge_num(FILE* file);
 
 TrCountingGraph::TrCountingGraph(const char* file_name) {
 	construct_trCountingGraph(this, file_name);
@@ -32,7 +31,7 @@ TrCountingGraph::TrCountingGraph(const char* file_name) {
 int64_t get_edge_num(FILE* pFile) {
 	fseek(pFile, 0, SEEK_END);
 	int64_t size = ftell(pFile);
-	fseek(pFile, 0, SEEK_SET);
+	rewind(pFile);
 	return size / 8;
 }
 
@@ -51,10 +50,8 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	int i = 0;
 
 	// Compute edge num by file length
-	fin.open(file_name, ifstream::binary | ifstream::in);
-	fin.seekg(0, fin.end);
-	tr_graph->edge_num = fin.tellg()/8;
-	fin.seekg(0, fin.beg);
+	FILE* pFile = fopen(file_name, "rb");
+	tr_graph->edge_num = get_edge_num(pFile);
 	
 	//Round 1, Get max id
 #if VERBOSE
@@ -62,7 +59,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 #endif
 	tr_graph->nodeid_max = 0;
 	tr_graph->entire_data = new char[tr_graph->edge_num * 8];
-	fin.read(tr_graph->entire_data, tr_graph->edge_num * 8);
+	fread(tr_graph->entire_data, 2 * sizeof(int), tr_graph->edge_num, pFile);
 	u = reinterpret_cast<int*>(tr_graph->entire_data);
 	for (int i = 0;i < THREADNUM; i++)
 		ths[i] = new thread(get_max, u, tr_graph->edge_num * 2, i, THREADNUM, node_max_thread+i);
