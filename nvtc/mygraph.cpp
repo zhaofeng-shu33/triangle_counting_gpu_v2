@@ -8,7 +8,6 @@
 #include <cstdlib>
 #include <stdint.h>
 #include <algorithm>
-#include <omp.h>
 #include <chrono>
 #include <thread>
 #include <mutex>

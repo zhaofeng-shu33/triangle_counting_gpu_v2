@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <fstream>
-#if __GNUG__
+#if __GNUG__ && ! __clang__
 #include <bits/stdc++.h>
 #else
 #define INT_MAX 2147483647
