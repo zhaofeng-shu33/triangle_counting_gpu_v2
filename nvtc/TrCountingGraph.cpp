@@ -72,10 +72,10 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	printf("Round 2, Get degree\n");
 #endif
 	int* _temp2 = new int[tr_graph->nodeid_max + 1]();
-	for(int i = 0; i < THREADNUM; i++)
-		ths[i] = new thread(get_degree, u, tr_graph->edge_num * 2, 2 * i, 6*THREADNUM, _temp2);
-	for(i = 0; i < THREADNUM; i++) {
-		ths[i]->join();
+	#pragma omp parallel for
+	for (int64_t i = 0; i < tr_graph->edge_num * 2; i += 6) {
+		_temp2[u[i]]++;
+		_temp2[u[i+1]]++;
 	}
 
 	//Round 3, Get offset
@@ -192,15 +192,6 @@ void sort_neighboor(TrCountingGraph* g, int* d) {
 #pragma omp parallel for
 	for (int64_t i = 0; i <= g->nodeid_max; i++) {
 		sort(g->neighboor + g->offset[i], g->neighboor + g->offset[i] + d[i]);
-	}
-}
-
-
-
-void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2) {
-	for(int64_t i = from;i<length;i+=step){
-		temp2[u[i]]++;
-		temp2[u[i+1]]++;
 	}
 }
 
