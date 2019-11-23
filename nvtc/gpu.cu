@@ -1,7 +1,6 @@
 #include "gpu.h"
 
 #include "gpu-thrust.h"
-#include "timer.h"
 
 #include <cuda_profiler_api.h>
 #include <cuda_runtime.h>
@@ -171,24 +170,7 @@ size_t GlobalMemory() {
   return prop.totalGlobalMem;
 }
 
-Edges RemoveBackwardEdgesCPU(const Edges& unordered_edges) {
-  int n = NumVertices(unordered_edges);
-  int m = unordered_edges.size();
 
-  vector<int> deg(n);
-  for (int i = 0; i < m; ++i)
-    ++deg[unordered_edges[i].first];
-
-  vector< pair<int, int> > edges;
-  edges.reserve(m / 2);
-  for (int i = 0; i < m; ++i) {
-    int s = unordered_edges[i].first, t = unordered_edges[i].second;
-    if (deg[s] > deg[t] || (deg[s] == deg[t] && s > t))
-      edges.push_back(make_pair(s, t));
-  }
-
-  return edges;
-}
 
 uint64_t MultiGPUCalculateTriangles(
     int n, int m, int* dev_edges, int* dev_nodes, int device_count) {
@@ -354,9 +336,6 @@ uint64_t GpuForwardSplit_v2(const TrCountingGraph& TrCountingGraph, int split_nu
 }
 
 uint64_t MultiGpuForward(int* edges, int device_count, int num_nodes, uint64_t num_edges) {
-#if TIMECOUNTING
-  Timer* timer = Timer::NewTimer();
-#endif
   CUCHECK(cudaSetDevice(0));
   const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();
 
@@ -403,23 +382,14 @@ uint64_t MultiGpuForward(int* edges, int device_count, int num_nodes, uint64_t n
     cudaProfilerStop();
     // Reduce
     result = SumResults(NUM_BLOCKS * NUM_THREADS, dev_results);
-#if TIMECOUNTING    
-    timer->Done("Calculate triangles used time: ");
-#endif
     CUCHECK(cudaFree(dev_results));
   } else {
     result = MultiGPUCalculateTriangles(
         n, m, dev_edges, dev_nodes, device_count);
-#if TIMECOUNTING        
-    timer->Done("Calculate triangles on multi GPU");
-#endif    
   }
 
   CUCHECK(cudaFree(dev_edges));
   CUCHECK(cudaFree(dev_nodes));
-#if TIMECOUNTING
-  delete timer;
-#endif
   return result;
 }
 

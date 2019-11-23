@@ -1,31 +1,25 @@
 #include "gpu.h"
-#include "counting_cpu.h"
 #include <cstring>
 #include <cassert>
 #include <cstdlib>
-#include <iostream>
+#include <stdio.h>
 #include <memory>
 #include <vector>
 #include <thread>
+#include <inttypes.h>
 
 using namespace std;
 
 
 int main(int argc, char *argv[]) {
     if (argc != 3 || strcmp(argv[1], "-f") != 0) {
-        std::cout << "Usage: nvtc-variant -f input.bin" << std::endl;
+        printf("Usage: nvtc-variant -f input.bin\n");
         exit(-1);
     }
-#if TIMECOUNTING 
-    unique_ptr<Timer> t(Timer::NewTimer());
-#endif
     TrCountingGraph TrCountingGraph(argv[2]);
 
 #if TRCOUNTING
     uint64_t result = 0;
-#if TIMECOUNTING
-    t->Done("Reading Data");
-#endif
     // Compute Split Information
     int split_num = GetSplitNum(TrCountingGraph.nodeid_max,TrCountingGraph.offset[TrCountingGraph.nodeid_max+1]);
     int64_t* split_offset;
@@ -44,10 +38,6 @@ int main(int argc, char *argv[]) {
     else{
         result = GpuForward_v2(TrCountingGraph);
     }
-#if TIMECOUNTING    
-    t->Done("Compute number of triangles");
-#endif
-    cout << "There are " << result <<
-            " triangles in the input graph." << endl;
+    printf("There are " PRIu64 " triangles in the input graph.\n");
 #endif
 }

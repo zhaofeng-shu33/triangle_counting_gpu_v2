@@ -11,7 +11,6 @@
 #if OPENMP
 #include <omp.h>
 #endif
-#include <chrono>
 #include <mutex>
 using namespace std;
 
