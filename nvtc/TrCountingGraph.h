@@ -1,17 +1,5 @@
 #pragma once
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <cstring>
-#include <map>
-#include <ctime>
-#include <cstdlib>
-#include <stdint.h>
-#include <algorithm>
-#if OPENMP
-#include <omp.h>
-#endif
-#include <mutex>
+
 using namespace std;
 
 
