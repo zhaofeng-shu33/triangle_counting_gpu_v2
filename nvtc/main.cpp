@@ -30,8 +30,7 @@ int main(int argc, char *argv[]) {
     if (split_num>1){
         int64_t cpu_result = 0;
         thread cpu_thread(cpu_counting_edge_first_v2,&TrCountingGraph,cpu_offset,&cpu_result);
-        result = GpuForwardSplit_v2(TrCountingGraph,split_num,cpu_offset);
-        cout<<"GPU Done."<<endl;
+        result = GpuForwardSplit_v2(TrCountingGraph,split_num,cpu_offset);        
         cpu_thread.join();
         result = result + cpu_result;
     }

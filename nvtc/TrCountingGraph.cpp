@@ -318,8 +318,4 @@ void cpu_counting_edge_first_v2(TrCountingGraph* g, int64_t offset_start, int64_
             }
         }
     *out = sum;
-	cout<<"CPU Done."<<endl;
-#if VERBOSE
-	cout<<"CPU Done."<<endl;
-#endif
 }
