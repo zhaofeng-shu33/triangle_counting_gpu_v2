@@ -3,7 +3,6 @@
 #include <fstream>
 #include <string>
 #include <cstring>
-#include <set>
 #include <ctime>
 #include <cstdlib>
 #include <stdint.h>
@@ -166,7 +165,7 @@ TrCountingGraph::TrCountingGraph(const char* file_name){
 			neighboor_start[start+j] = i;
 	}
 
-	sort_neighboor(_temp);
+	sort_neighboor(this, _temp);
 
 	#pragma omp parallel for
 	for (int64_t i = 0; i <= nodeid_max; i++) {
@@ -181,14 +180,13 @@ TrCountingGraph::TrCountingGraph(const char* file_name){
 			}
 		}
 	}
-
-	sort_neighboor(_temp);
+	sort_neighboor(this, _temp);
 }
 
-void TrCountingGraph::sort_neighboor(int* d) {
+void sort_neighboor(TrCountingGraph* g, int* d) {
 #pragma omp parallel for
-	for (int64_t i = 0; i <= nodeid_max; i++) {
-		sort(neighboor + offset[i], neighboor + offset[i] + d[i]);
+	for (int64_t i = 0; i <= g->nodeid_max; i++) {
+		sort(g->neighboor + g->offset[i], g->neighboor + g->offset[i] + d[i]);
 	}
 }
 
