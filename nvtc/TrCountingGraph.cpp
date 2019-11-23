@@ -24,6 +24,7 @@ void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out);
 void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2);
 void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, int* _temp2, int* _temp);
 void loadbatch_R3(TrCountingGraph* G,const char* file_name, int length,int from,int step);
+void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name);
 
 TrCountingGraph::TrCountingGraph(const char* file_name) {
 	construct_trCountingGraph(this, file_name);
