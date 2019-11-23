@@ -61,13 +61,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	int *u, *v;
 	int x, y;
 	int node_max = 0;
-<<<<<<< nvtc/TrCountingGraph.cpp
-	//uint THREADNUM = thread::hardware_concurrency();
-	int* node_max_thread = new int[THREADNUM]{0};
 	pthread_t ths[THREADNUM_R4];
-=======
-	thread* ths[THREADNUM_R4];
->>>>>>> nvtc/TrCountingGraph.cpp
 	int i = 0;
 
 	// Compute edge num by file length
