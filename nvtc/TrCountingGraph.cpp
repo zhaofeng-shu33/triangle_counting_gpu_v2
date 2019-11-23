@@ -87,9 +87,9 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	int* _temp;
 	_temp = (int*)malloc(sizeof(int) * (tr_graph->nodeid_max + 1));
 	memset(_temp, 0, sizeof(int) * (tr_graph->nodeid_max + 1));
-	for (int i = 0; i < THREADNUM; i++)
-		ths[i] = new thread(get_length, u, tr_graph->edge_num * 2, 2*i, 2*THREADNUM, lock, _temp2, _temp);
-	for (i = 0; i < THREADNUM; i++) {
+	for (int i = 0; i < 1; i++)
+		ths[i] = new thread(get_length, u, tr_graph->edge_num * 2, 2*i, 2*1, lock, _temp2, _temp);
+	for (i = 0; i < 1; i++) {
 		ths[i]->join();
 	}
 	if (tr_graph->edge_num % 2==0) {
