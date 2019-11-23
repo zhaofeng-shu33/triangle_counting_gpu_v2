@@ -37,6 +37,6 @@ int main(int argc, char *argv[]) {
     else{
         result = GpuForward_v2(TrCountingGraph);
     }
-    printf("There are " PRIu64 " triangles in the input graph.\n");
+    printf("There are %" PRIu64 " triangles in the input graph.\n", result);
 #endif
 }
