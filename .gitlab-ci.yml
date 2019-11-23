@@ -1,8 +1,6 @@
 build:
   tags:
     - bcm
-    - tc
-    - gpu
   script:
     - bash build.sh
 
