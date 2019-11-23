@@ -101,7 +101,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	printf("Round 3, Get offset");
 #endif
 	int num_of_thread_locks = tr_graph->nodeid_max/LOCKSHARE + 1;
-	pthread_mutex_t* lock = new pthread_mutex_t[num_of_thread_locks];
+	pthread_mutex_t* lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t) * num_of_thread_locks);
 	for(int i = 0; i < num_of_thread_locks; i++) {
 		pthread_mutex_init(&lock[i], NULL);
 	}
@@ -143,7 +143,10 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	}
 	
 	//delete[] entire_data;
-	delete [] lock;
+	for(int i = 0; i < num_of_thread_locks; i++) {
+		pthread_mutex_destroy(&lock[i]);
+	}
+	free(lock);
 	tr_graph->degree = new int[tr_graph->nodeid_max + 1]();
 	#pragma omp parallel for
 	for (int64_t i = 0; i < tr_graph->nodeid_max+1; i++) {
