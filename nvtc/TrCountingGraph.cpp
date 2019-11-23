@@ -37,7 +37,6 @@ int64_t get_edge_num(FILE* pFile) {
 
 void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name){
 	// Temporal variables
-    ifstream fin;
 	char buffer[BUFFERSIZE];
 	char u_array[4], v_array[4];
 	int64_t counter = 0;
@@ -86,12 +85,12 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 #endif
 	mutex* lock = new mutex[tr_graph->nodeid_max/LOCKSHARE + 1];
 	int* _temp = new int[tr_graph->nodeid_max + 1]();
-	for(int i=0;i<THREADNUM;i++)
+	for (int i = 0; i < THREADNUM; i++)
 		ths[i] = new thread(get_length, u, tr_graph->edge_num * 2, 2*i, 2*THREADNUM, lock, _temp2, _temp);
-	for(i=0;i<THREADNUM;i++){
+	for (i = 0; i < THREADNUM; i++){
 		ths[i]->join();
 	}
-	if(tr_graph->edge_num % 2==0){
+	if (tr_graph->edge_num % 2==0) {
 		#pragma omp parallel for
 		for (int64_t i = tr_graph->edge_num; i <= 2 * tr_graph->edge_num; i+=2) {
 			u[i - tr_graph->edge_num + 1] = u[i];
@@ -104,7 +103,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 		for (int64_t i = 1; i < tr_graph->edge_num; i+=2) {
 			u[tr_graph->edge_num/2*3+i/2] = u[i];
 		}
-	}else{
+	} else {
 		#pragma omp parallel for
 		for (int64_t i = tr_graph->edge_num+1; i <= 2 * tr_graph->edge_num; i+=2) {
 			u[i - tr_graph->edge_num] = u[i];
@@ -146,8 +145,9 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 		ths[i]->join();
 	}
 	counter = batch_num*(BATCHSIZE);
-	fin.seekg(batch_num*BUFFERSIZE,fin.beg);
-	fin.read(buffer, residual*8);
+	fseek(pFile, batch_num * BUFFERSIZE, SEEK_SET);
+	fread(buffer, 2 * sizeof(int), residual, pFile);
+
 	u = reinterpret_cast<int*>(buffer);
 	int choice, shift;
 	for (int64_t i = 0; i < tr_graph->edge_num-counter; i++) {
@@ -204,12 +204,14 @@ void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out){
 	}
 	*out = max;
 }
+
 void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2){
 	for(int64_t i = from;i<length;i+=step){
 		temp2[u[i]]++;
 		temp2[u[i+1]]++;
 	}
 }
+
 // _temp是一个计数器，用来记录这个节点下分配了多少条边，同时对某条边就是稍后实际写入时的相对位置
 void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, int* _temp2, int* _temp){
 	int x,y;
@@ -291,6 +293,7 @@ int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t*& o
 	}
 	return max_length;
 }
+
 void cpu_counting_edge_first_v2(TrCountingGraph* g, int64_t offset_start, int64_t* out){
     int64_t sum=0;
     int iit = 0;
