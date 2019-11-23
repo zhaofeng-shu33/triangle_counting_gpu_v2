@@ -31,15 +31,15 @@ int main(int argc, char *argv[]) {
     int64_t chunk_length_max = get_split_v2(TrCountingGraph.offset, TrCountingGraph.nodeid_max, split_num, split_offset);
     
     // Last k% edges will be calculated by cpu.
-    int64_t cpu_offset = (int64_t) ((double)(TrCountingGraph.offset[TrCountingGraph.nodeid_max+1]) * (1-0.05));
-    if (split_num>1){
+    int64_t cpu_offset = (int64_t) ((double)(TrCountingGraph.offset[TrCountingGraph.nodeid_max+1]) * (1-0.02));
+    if (split_num>1) {
         int64_t cpu_result = 0;
         thread cpu_thread(cpu_counting_edge_first_v2,&TrCountingGraph,cpu_offset,&cpu_result);
         result = GpuForwardSplit_v2(TrCountingGraph,split_num,cpu_offset);        
         cpu_thread.join();
         result = result + cpu_result;
     }
-    else{
+    else {
         result = GpuForward_v2(TrCountingGraph);
     }
     printf("There are %" PRIu64 " triangles in the input graph.\n", result);

@@ -1,6 +1,5 @@
 #include "TrCountingGraph.h"
 #include <stdio.h>
-#include <fstream>
 #include <string>
 #include <cstring>
 #include <ctime>
@@ -175,7 +174,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 
 	#pragma omp parallel for
 	for (int64_t i = 0; i <= tr_graph->nodeid_max; i++) {
-		int m,n;
+		int m, n;
 		if (_temp[i] > 1) {
 			for (m = 0; m < _temp[i];) {
 				for(n=m+1;n<_temp[i] && tr_graph->neighboor[tr_graph->offset[i]+m] == tr_graph->neighboor[tr_graph->offset[i]+n];n++){
@@ -196,7 +195,7 @@ void sort_neighboor(TrCountingGraph* g, int* d) {
 	}
 }
 
-void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out){
+void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out) {
 	int max = 0;
 	for(int64_t i = from;i<length;i+=step){
 		if(u[i]>max)
@@ -205,7 +204,7 @@ void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out){
 	*out = max;
 }
 
-void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2){
+void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2) {
 	for(int64_t i = from;i<length;i+=step){
 		temp2[u[i]]++;
 		temp2[u[i+1]]++;
@@ -213,7 +212,7 @@ void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2){
 }
 
 // _temp是一个计数器，用来记录这个节点下分配了多少条边，同时对某条边就是稍后实际写入时的相对位置
-void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, int* _temp2, int* _temp){
+void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, int* _temp2, int* _temp) {
 	int x,y;
 	for (int64_t i = from; i < length; i += step) {
 		x = *(u + i);
@@ -248,8 +247,7 @@ void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, 
 }
 
 void loadbatch_R3(TrCountingGraph* G,const char* file_name, int length,int from,int step){
-	ifstream fin;
-	fin.open(file_name, ifstream::binary | ifstream::in);
+	FILE* pFile = fopen(file_name, "rb");
 	int64_t start = 0;
 	char buffer[BUFFERSIZE];
 	int* u;
@@ -257,8 +255,8 @@ void loadbatch_R3(TrCountingGraph* G,const char* file_name, int length,int from,
 	int choice,shift;
 	int64_t counter;
 	for (int64_t k=from; k<length; k+=step){
-		fin.seekg(k*BUFFERSIZE, fin.beg);
-		fin.read(buffer, BUFFERSIZE);
+		fseek(pFile, k * BUFFERSIZE, SEEK_SET);
+		fread(buffer, 1, BUFFERSIZE, pFile);
 		counter = k*BATCHSIZE;
 		u = reinterpret_cast<int*>(buffer);
 		for (int j = 0; j < BATCHSIZE; j++) {
