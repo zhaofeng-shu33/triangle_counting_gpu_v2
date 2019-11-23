@@ -5,10 +5,8 @@
 #include <cstring>
 #include <ctime>
 #include <cstdlib>
-#include <stdint.h>
 #include <algorithm>
 #include <thread>
-#include <mutex>
 #define BUFFERSIZE 8192*128
 #define BATCHSIZE BUFFERSIZE/8
 #define INTMAX 2147483647
@@ -25,9 +23,17 @@ void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2);
 void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, int* _temp2, int* _temp);
 void loadbatch_R3(TrCountingGraph* G,const char* file_name, int length,int from,int step);
 void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name);
+int64_t get_edge_num(FILE* file);
 
 TrCountingGraph::TrCountingGraph(const char* file_name) {
 	construct_trCountingGraph(this, file_name);
+}
+
+int64_t get_edge_num(FILE* pFile) {
+	fseek(pFile, 0, SEEK_END);
+	int64_t size = ftell(pFile);
+	fseek(pFile, 0, SEEK_SET);
+	return size / 8;
 }
 
 void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name){

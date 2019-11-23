@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>  // NOLINT(build/include_order)
 
+#include <nvtc/TrCountingGraph.h>
 #include <nvtc/gpu.h>
 
 #if GPU
@@ -19,5 +20,10 @@ TEST(tcv2, io_nvgraph) {
 #endif
 
 
-
+TEST(io, get_edge_num) {
+   File* pFile = fopen("test_io.bin", "rb");
+   int64_t size = get_edge_num(pFile);
+   fclose(pFile);
+   EXPECT_EQ(size, 3);
+}
 
