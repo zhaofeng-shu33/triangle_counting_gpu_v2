@@ -1,7 +1,6 @@
 #ifndef GPU_H
 #define GPU_H
 
-#include "graph.h"
 #include "TrCountingGraph.h"
 #include <stdint.h>
 

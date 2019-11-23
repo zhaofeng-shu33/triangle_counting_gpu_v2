@@ -1,7 +1,5 @@
 // Copyright 2019 zhaofeng-shu33
 
-#include <iostream>
-
 #include <gtest/gtest.h>  // NOLINT(build/include_order)
 
 #include <nvtc/graph.h>
