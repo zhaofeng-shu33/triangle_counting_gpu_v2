@@ -5,7 +5,7 @@
 using namespace std;
 
 
-class TrCountingGraph{
+class TrCountingGraph {
 	public:
 		// Construct Function
 		TrCountingGraph(const char* file_name);

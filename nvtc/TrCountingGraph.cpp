@@ -5,7 +5,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <algorithm>
-#include <thread>
+#include <pthread.h>
 #define BUFFERSIZE 8192*128
 #define BATCHSIZE BUFFERSIZE/8
 #define INTMAX 2147483647
@@ -14,13 +14,31 @@
 #define THREADNUM_R4 10
 #define LOCKSHARE 10
 
+struct GET_LENGTH_ARGS {
+	int* u;
+	int64_t length;
+	int64_t from;
+	int64_t step;
+	pthread_mutex_t* lock;
+	int* _temp2;
+	int* _temp;
+};
+
+struct BATCH_R4_ARGS {
+	TrCountingGraph* G;
+	const char* file_name;
+	int length;
+	int from;
+	int step;
+};
+
 using namespace std;
 
 void foo(){return;};
 void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out);
 void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2);
-void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, int* _temp2, int* _temp);
-void loadbatch_R3(TrCountingGraph* G,const char* file_name, int length,int from,int step);
+void* get_length(void* args);
+void* loadbatch_R4(void* args);
 void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name);
 
 TrCountingGraph::TrCountingGraph(const char* file_name) {
@@ -44,7 +62,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	int node_max = 0;
 	//uint THREADNUM = thread::hardware_concurrency();
 	int* node_max_thread = new int[THREADNUM]{0};
-	thread* ths[THREADNUM_R4];
+	pthread_t* ths[THREADNUM_R4];
 	int i = 0;
 
 	// Compute edge num by file length
@@ -82,12 +100,17 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 #if VERBOSE
 	printf("Round 3, Get offset");
 #endif
-	mutex* lock = new mutex[tr_graph->nodeid_max/LOCKSHARE + 1];
+	int num_of_thread_locks = tr_graph->nodeid_max/LOCKSHARE + 1;
+	pthread_mutex_t* lock = new pthread_mutex_t[num_of_thread_locks];
+	for(int i = 0; i < num_of_thread_locks; i++) {
+		pthread_mutex_init(&lock[i], NULL);
+	}
 	int* _temp = new int[tr_graph->nodeid_max + 1]();
+	struct GET_LENGTH_ARGS gen_length_args = {u, tr_graph->edge_num * 2, 2*i, 2*THREADNUM, lock, _temp2, _temp};
 	for (int i = 0; i < THREADNUM; i++)
-		ths[i] = new thread(get_length, u, tr_graph->edge_num * 2, 2*i, 2*THREADNUM, lock, _temp2, _temp);
+		pthread_create(ths[i], NULL, get_length, (void *)&gen_length_args);
 	for (i = 0; i < THREADNUM; i++) {
-		ths[i]->join();
+		pthread_join(*ths[i], NULL);
 	}
 	if (tr_graph->edge_num % 2==0) {
 		#pragma omp parallel for
@@ -138,10 +161,11 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 #endif
 	int64_t batch_num = tr_graph->edge_num/(BATCHSIZE);
 	int64_t residual = tr_graph->edge_num%(BATCHSIZE);
-	for(int i=0;i<THREADNUM_R4;i++)
-		ths[i] = new thread(loadbatch_R3, tr_graph, file_name, batch_num, i, THREADNUM_R4);
-	for(i=0;i<THREADNUM_R4;i++){
-		ths[i]->join();
+	struct BATCH_R4_ARGS batch_r4_args = {tr_graph, file_name, batch_num, i, THREADNUM_R4};
+	for (int i = 0; i < THREADNUM_R4; i++)
+		pthread_create(ths[i], NULL, loadbatch_R4, (void *)&batch_r4_args);
+	for (i = 0; i < THREADNUM_R4; i++) {
+		pthread_join(*ths[i], NULL);
 	}
 	counter = batch_num*(BATCHSIZE);
 	fseek(pFile, batch_num * BUFFERSIZE, SEEK_SET);
@@ -189,14 +213,23 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 }
 
 void sort_neighboor(TrCountingGraph* g, int* d) {
-#pragma omp parallel for
+	#pragma omp parallel for
 	for (int64_t i = 0; i <= g->nodeid_max; i++) {
 		sort(g->neighboor + g->offset[i], g->neighboor + g->offset[i] + d[i]);
 	}
 }
 
-// _temp是一个计数器，用来记录这个节点下分配了多少条边，同时对某条边就是稍后实际写入时的相对位置
-void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, int* _temp2, int* _temp) {
+// _temp 是一个计数器，用来记录这个节点下分配了多少条边，同时对某条边就是稍后实际写入时的相对位置
+// _temp2 是度的估计
+void* get_length(void* args) {
+	struct GET_LENGTH_ARGS* gen_len_args = (struct GET_LENGTH_ARGS*) args;
+	int* u = gen_len_args->u;
+	int64_t length = gen_len_args->length;
+	int64_t from = gen_len_args->from;
+	int64_t step = gen_len_args->step;
+	pthread_mutex_t* lock = gen_len_args->lock;
+	int* _temp2 = gen_len_args->_temp2;
+	int* _temp = gen_len_args->_temp;
 	int x,y;
 	for (int64_t i = from; i < length; i += step) {
 		x = *(u + i);
@@ -204,33 +237,39 @@ void get_length(int*u, int64_t length, int64_t from, int64_t step, mutex* lock, 
 		if (x == y)
 		    continue;
 		if(_temp2[x] < _temp2[y] ) {
-			lock[x/LOCKSHARE].lock();
+			pthread_mutex_lock(&lock[x/LOCKSHARE]);
 			*(u + i) = _temp[x] << 1; // 最后一位记录要分到哪个节点下面
 		    _temp[x]++;
-			lock[x/LOCKSHARE].unlock();
+			pthread_mutex_unlock(&lock[x/LOCKSHARE]);
 		}
 		else if (_temp2[x] > _temp2[y]) {
-			lock[y/LOCKSHARE].lock();
+			pthread_mutex_lock(&lock[y/LOCKSHARE]);
 			*(u + i) = (_temp[y] << 1) + 1;
 			_temp[y]++;
-			lock[y/LOCKSHARE].unlock();
+			pthread_mutex_unlock(&lock[y/LOCKSHARE]);
 		}
 		else if (x < y) {
-			lock[x/LOCKSHARE].lock();
+			pthread_mutex_lock(&lock[x/LOCKSHARE]);
 			*(u + i) = _temp[x] << 1;
 			_temp[x]++;
-			lock[x/LOCKSHARE].unlock();
+			pthread_mutex_unlock(&lock[x/LOCKSHARE]);
 		}
 		else {
-			lock[y/LOCKSHARE].lock();
+			pthread_mutex_lock(&lock[y/LOCKSHARE]);
 			*(u + i) = (_temp[y] << 1) + 1;
 			_temp[y]++;
-			lock[y/LOCKSHARE].unlock();
+			pthread_mutex_unlock(&lock[y/LOCKSHARE]);
 		}
 	}
 }
 
-void loadbatch_R3(TrCountingGraph* G,const char* file_name, int length,int from,int step){
+void* loadbatch_R4(void* args){
+	struct BATCH_R4_ARGS* batch_r4_args = (struct BATCH_R4_ARGS*) args;
+	TrCountingGraph* G = batch_r4_args->G;
+	const char* file_name = batch_r4_args->file_name;
+	int length = batch_r4_args->length;
+	int from = batch_r4_args->length;
+	int step = batch_r4_args->step;
 	FILE* pFile = fopen(file_name, "rb");
 	int64_t start = 0;
 	char buffer[BUFFERSIZE];
