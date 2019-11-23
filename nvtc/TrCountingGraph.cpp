@@ -1,5 +1,6 @@
 #include "TrCountingGraph.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string>
 #include <cstring>
 #include <ctime>
@@ -60,9 +61,13 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	int *u, *v;
 	int x, y;
 	int node_max = 0;
+<<<<<<< nvtc/TrCountingGraph.cpp
 	//uint THREADNUM = thread::hardware_concurrency();
 	int* node_max_thread = new int[THREADNUM]{0};
 	pthread_t ths[THREADNUM_R4];
+=======
+	thread* ths[THREADNUM_R4];
+>>>>>>> nvtc/TrCountingGraph.cpp
 	int i = 0;
 
 	// Compute edge num by file length
@@ -74,7 +79,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	printf("Round 1, Get max id");
 #endif
 	tr_graph->nodeid_max = 0;
-	tr_graph->entire_data = new char[tr_graph->edge_num * 8];
+	tr_graph->entire_data = (char*)malloc(sizeof(char) * tr_graph->edge_num * 8);
 	fread(tr_graph->entire_data, 2 * sizeof(int), tr_graph->edge_num, pFile);
 	u = reinterpret_cast<int*>(tr_graph->entire_data);
 	int max_node_id = 0;
@@ -89,7 +94,9 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 #if VERBOSE
 	printf("Round 2, Get degree\n");
 #endif
-	int* _temp2 = new int[tr_graph->nodeid_max + 1]();
+	int* _temp2;
+	_temp2 = (int*)malloc(sizeof(int) * (tr_graph->nodeid_max + 1));
+	memset(_temp2, 0, sizeof(int) * (tr_graph->nodeid_max + 1));
 	#pragma omp parallel for
 	for (int64_t i = 0; i < tr_graph->edge_num * 2; i += 6) {
 		_temp2[u[i]]++;
@@ -105,12 +112,15 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	for(int i = 0; i < num_of_thread_locks; i++) {
 		pthread_mutex_init(&lock[i], NULL);
 	}
-	int* _temp = new int[tr_graph->nodeid_max + 1]();
+	int* _temp;
+	_temp = (int*)malloc(sizeof(int) * (tr_graph->nodeid_max + 1));
+	memset(_temp, 0, sizeof(int) * (tr_graph->nodeid_max + 1));
 	struct GET_LENGTH_ARGS gen_length_args_array[THREADNUM];	
 	for (int i = 0; i < THREADNUM; i++) {
 		gen_length_args_array[i] = {u, tr_graph->edge_num * 2, 2 * i, 2*THREADNUM, lock, _temp2, _temp};
 		pthread_create(&ths[i], NULL, get_length, (void *)&gen_length_args_array[i]);
 	}
+
 	for (i = 0; i < THREADNUM; i++) {
 		pthread_join(ths[i], NULL);
 	}
@@ -147,14 +157,17 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 		pthread_mutex_destroy(&lock[i]);
 	}
 	free(lock);
-	tr_graph->degree = new int[tr_graph->nodeid_max + 1]();
+	tr_graph->degree = (int*) malloc(sizeof(int) * (tr_graph->nodeid_max + 1));
+	memset(tr_graph->degree, 0, sizeof(int) * (tr_graph->nodeid_max + 1));
+
 	#pragma omp parallel for
 	for (int64_t i = 0; i < tr_graph->nodeid_max+1; i++) {
 		tr_graph->degree[i] =  _temp[i];
 	}
 	tr_graph->neighboor = u;
 	tr_graph->neighboor_start = u + tr_graph->edge_num;
-	tr_graph->offset = new int64_t[tr_graph->nodeid_max +2]();
+	tr_graph->offset = (int64_t*) malloc(sizeof(int64_t) * (tr_graph->nodeid_max + 2));
+	memset(tr_graph->offset, 0, sizeof(int64_t) * (tr_graph->nodeid_max + 2));
 	tr_graph->offset[0] = 0;
 	for (int64_t i = 1; i <= tr_graph->nodeid_max + 1; i++) {
 		tr_graph->offset[i] = tr_graph->offset[i - 1] + _temp[i - 1];
@@ -309,7 +322,8 @@ void* loadbatch_R4(void* args){
 
 int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t*& out){
 	int64_t max_length = 0;
-	out = new int64_t[split_num+1];
+	out = (int64_t*)malloc(sizeof(int64_t) * (split_num+1));
+	memset(out, 0, sizeof(int64_t) * (split_num+1));
 	out[0] = 0;
 	for(int i=1;i<split_num;i++){
 		int64_t target = out[i-1]+(offset[nodeid_max+1])/split_num;
