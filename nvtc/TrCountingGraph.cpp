@@ -106,9 +106,8 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 		pthread_mutex_init(&lock[i], NULL);
 	}
 	int* _temp = new int[tr_graph->nodeid_max + 1]();
-	struct GET_LENGTH_ARGS gen_length_args = {u, tr_graph->edge_num * 2, 0, 2*THREADNUM, lock, _temp2, _temp};
 	for (int i = 0; i < THREADNUM; i++) {
-		gen_length_args.from = 2 * i;
+		struct GET_LENGTH_ARGS gen_length_args = {u, tr_graph->edge_num * 2, 2 * i, 2*THREADNUM, lock, _temp2, _temp};
 		pthread_create(&ths[i], NULL, get_length, (void *)&gen_length_args);
 	}
 	for (i = 0; i < THREADNUM; i++) {
@@ -166,9 +165,8 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 #endif
 	int64_t batch_num = tr_graph->edge_num/(BATCHSIZE);
 	int64_t residual = tr_graph->edge_num%(BATCHSIZE);
-	struct BATCH_R4_ARGS batch_r4_args = {tr_graph, file_name, batch_num, 0, THREADNUM_R4};
 	for (int i = 0; i < THREADNUM_R4; i++){
-		batch_r4_args.from = i;
+		struct BATCH_R4_ARGS batch_r4_args = {tr_graph, file_name, batch_num, i, THREADNUM_R4};
 		pthread_create(&ths[i], NULL, loadbatch_R4, (void *)&batch_r4_args);
 	}
 	for (i = 0; i < THREADNUM_R4; i++) {
