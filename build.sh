@@ -3,6 +3,7 @@ set -e -x
 SYSTEMNAME=$(cat /etc/issue)
 FLAGS=`echo $SYSTEMNAME | awk '{print match($0,"Ubuntu")}'`
 if [ $FLAGS -gt 0 ]; then
+    export PATH=/usr/local/lib:/usr/local/cuda-10.1/bin:/usr/local/cuda-10.1/NsightCompute-2019.1${PATH:+:${PATH}}
     mkdir build
     python graph_generator.py
     cd build
