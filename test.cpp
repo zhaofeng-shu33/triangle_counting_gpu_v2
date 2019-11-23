@@ -21,7 +21,7 @@ TEST(tcv2, io_nvgraph) {
 
 
 TEST(io, get_edge_num) {
-   File* pFile = fopen("test_io.bin", "rb");
+   FILE* pFile = fopen("test_io.bin", "rb");
    int64_t size = get_edge_num(pFile);
    fclose(pFile);
    EXPECT_EQ(size, 3);
