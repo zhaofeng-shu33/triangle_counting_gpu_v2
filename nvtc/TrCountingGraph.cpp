@@ -231,7 +231,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 void sort_neighboor(TrCountingGraph* g, int* d) {
 	#pragma omp parallel for
 	for (int64_t i = 0; i <= g->nodeid_max; i++) {
-		sort(g->neighboor + g->offset[i], g->neighboor + g->offset[i] + d[i]);
+		sort(g->neighboor + g->offset[i], g->neighboor + g->offset[i + 1]);
 	}
 }
 
