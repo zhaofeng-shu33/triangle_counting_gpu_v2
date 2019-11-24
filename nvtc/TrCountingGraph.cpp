@@ -219,7 +219,6 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 		}
 	}
 	sort_neighboor(tr_graph, pointer);
-	free(pointer);
 }
 
 void sort_neighboor(TrCountingGraph* g, int* d) {
