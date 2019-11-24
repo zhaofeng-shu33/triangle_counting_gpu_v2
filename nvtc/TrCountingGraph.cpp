@@ -11,7 +11,7 @@
 #define BATCHSIZE BUFFERSIZE/8
 #define INTMAX 2147483647
 #define THREADNUM 8
-// R4 is an IO-Dense task, slighly more threads can make better use of cpu. 
+// R4 is an IO-Dense task, slightly more threads can make better use of cpu. 
 #define THREADNUM_R4 10
 #define LOCKSHARE 10
 
@@ -35,7 +35,6 @@ struct BATCH_R4_ARGS {
 
 using namespace std;
 
-void foo(){return;};
 void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out);
 void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2);
 void* get_length(void* args);
@@ -53,7 +52,7 @@ int64_t get_edge_num(FILE* pFile) {
 	return size / 8;
 }
 
-void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name){
+void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name) {
 	// Temporal variables
 	char buffer[BUFFERSIZE];
 	char u_array[4], v_array[4];
@@ -78,8 +77,8 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	u = reinterpret_cast<int*>(tr_graph->entire_data);
 	int max_node_id = 0;
 	#pragma omp parallel for reduction(max:max_node_id)
-	for(int64_t i = 0; i < tr_graph->edge_num * 2; i += 1) {
-		if(max_node_id < u[i])
+	for (int64_t i = 0; i < tr_graph->edge_num * 2; i += 1) {
+		if (max_node_id < u[i])
 			max_node_id = u[i];
 	}
 	tr_graph->nodeid_max = max_node_id;
@@ -94,7 +93,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	#pragma omp parallel for
 	for (int64_t i = 0; i < tr_graph->edge_num * 2; i += 6) {
 		degree_estimation[u[i]]++;
-		degree_estimation[u[i+1]]++;
+		degree_estimation[u[i + 1]]++;
 	}
 
 	//Round 3, Get offset
@@ -165,8 +164,8 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 #if VERBOSE
 	printf("Round 4, Record neighboors");
 #endif
-	int64_t batch_num = tr_graph->edge_num/(BATCHSIZE);
-	int64_t residual = tr_graph->edge_num%(BATCHSIZE);
+	int64_t batch_num = tr_graph->edge_num / BATCHSIZE;
+	int64_t residual = tr_graph->edge_num % BATCHSIZE;
 	struct BATCH_R4_ARGS batch_r4_args_array[THREADNUM_R4];
 	for (int i = 0; i < THREADNUM_R4; i++){
 		batch_r4_args_array[i] = {tr_graph, file_name, batch_num, i, THREADNUM_R4};
@@ -184,13 +183,12 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	for (int64_t i = 0; i < tr_graph->edge_num-counter; i++) {
 		x = *(u + 2 * i);
 		y = *(u + 2 * i + 1);
-		if (x==y) continue;
-		choice = tr_graph->neighboor_start[counter+i]%2;
-		shift = tr_graph->neighboor_start[counter+i]>>1;
-		if( choice==0 ){
+		if (x == y) continue;
+		choice = tr_graph->neighboor_start[counter + i] % 2;
+		shift = tr_graph->neighboor_start[counter + i] >> 1;
+		if (choice==0) {
 			tr_graph->neighboor[tr_graph->offset[x] + shift] = y;
-		}
-		else{
+		} else {
 			tr_graph->neighboor[tr_graph->offset[y] + shift] = x;
 		}
 	}
@@ -198,8 +196,8 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	#pragma omp parallel for
 	for (int64_t i = 0; i <= tr_graph->nodeid_max; i++) {
 		int64_t start = tr_graph->offset[i];
-		for (int j=0; j < tr_graph->degree[i];j++)
-			tr_graph->neighboor_start[start+j] = i;
+		for (int j = 0; j < tr_graph->degree[i]; j++)
+			tr_graph->neighboor_start[start + j] = i;
 	}
 
 	sort_neighboor(tr_graph);
@@ -209,9 +207,11 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 		int m, n, degree_inner = 0;
 		if (pointer[i] > 1) {
 			for (m = 0; m < pointer[i];) {
-				for (n = m + 1; n < pointer[i] && tr_graph->neighboor[tr_graph->offset[i]+m] == tr_graph->neighboor[tr_graph->offset[i]+n];n++){
+				for (n = m + 1; n < pointer[i] &&
+					tr_graph->neighboor[tr_graph->offset[i] + m] ==
+					tr_graph->neighboor[tr_graph->offset[i] + n]; n++) {
 					degree_inner++;
-					tr_graph->neighboor[tr_graph->offset[i]+n] = INTMAX;
+					tr_graph->neighboor[tr_graph->offset[i] + n] = INTMAX;
 				}
 				m = n;
 			}
@@ -273,7 +273,7 @@ void* get_length(void* args) {
 	return NULL;
 }
 
-void* loadbatch_R4(void* args){
+void* loadbatch_R4(void* args) {
 	struct BATCH_R4_ARGS* batch_r4_args = (struct BATCH_R4_ARGS*) args;
 	TrCountingGraph* G = batch_r4_args->G;
 	const char* file_name = batch_r4_args->file_name;
