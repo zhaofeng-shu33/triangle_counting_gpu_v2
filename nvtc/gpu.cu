@@ -324,6 +324,7 @@ uint64_t GpuForwardSplit_v2(const TrCountingGraph& TrCountingGraph, int split_nu
         dev_neighbor_start_i, TrCountingGraph.neighboor_start+split_offset[i], (split_offset[i+1]-split_offset[i])*sizeof(int), cudaMemcpyHostToDevice));
       CUCHECK(cudaMemcpyAsync(
         dev_neighbor_j, TrCountingGraph.neighboor+split_offset[j], (split_offset[j+1]-split_offset[j])*sizeof(int), cudaMemcpyHostToDevice));
+      CUCHECK(cudaDeviceSynchronize());
 
       CalculateTrianglesSplit_v2<<<NUM_BLOCKS, NUM_THREADS>>>(
         cpu_offset>split_offset[i+1]?split_offset[i+1]-split_offset[i]:cpu_offset-split_offset[i],
