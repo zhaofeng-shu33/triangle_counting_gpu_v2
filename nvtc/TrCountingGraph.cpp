@@ -212,15 +212,16 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 
 	#pragma omp parallel for
 	for (int64_t i = 0; i <= tr_graph->nodeid_max; i++) {
-		int m, n;
+		int m, n, degree_inner = 0;
 		if (pointer[i] > 1) {
 			for (m = 0; m < pointer[i];) {
-				for(n=m+1;n<pointer[i] && tr_graph->neighboor[tr_graph->offset[i]+m] == tr_graph->neighboor[tr_graph->offset[i]+n];n++){
-					tr_graph->degree[i]--;
+				for (n = m + 1; n < pointer[i] && tr_graph->neighboor[tr_graph->offset[i]+m] == tr_graph->neighboor[tr_graph->offset[i]+n];n++){
+					degree_inner++;
 					tr_graph->neighboor[tr_graph->offset[i]+n] = INTMAX;
 				}
 				m = n;
 			}
+			tr_graph->degree[i] -= degree_inner;
 		}
 	}
 	sort_neighboor(tr_graph, pointer);
