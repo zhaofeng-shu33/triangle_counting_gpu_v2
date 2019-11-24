@@ -152,13 +152,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	}
 	free(lock);
 	free(degree_estimation);
-	tr_graph->degree = (int*) malloc(sizeof(int) * (tr_graph->nodeid_max + 1));
-	memset(tr_graph->degree, 0, sizeof(int) * (tr_graph->nodeid_max + 1));
-
-	#pragma omp parallel for
-	for (int64_t i = 0; i < tr_graph->nodeid_max+1; i++) {
-		tr_graph->degree[i] =  pointer[i];
-	}
+	tr_graph->degree = pointer;
 	tr_graph->neighboor = u;
 	tr_graph->neighboor_start = u + tr_graph->edge_num;
 	tr_graph->offset = (int64_t*) malloc(sizeof(int64_t) * (tr_graph->nodeid_max + 2));
