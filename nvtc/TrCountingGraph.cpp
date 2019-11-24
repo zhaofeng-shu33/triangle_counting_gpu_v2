@@ -166,7 +166,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	for (int64_t i = 1; i <= tr_graph->nodeid_max + 1; i++) {
 		tr_graph->offset[i] = tr_graph->offset[i - 1] + pointer[i - 1];
 	}
-
+	free(degree_estimation);
 	//Round 4, Record neighboors
 #if VERBOSE
 	printf("Round 4, Record neighboors");
@@ -224,6 +224,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 		}
 	}
 	sort_neighboor(tr_graph, pointer);
+	free(pointer);
 }
 
 void sort_neighboor(TrCountingGraph* g, int* d) {
