@@ -7,8 +7,8 @@
 #include <cstdlib>
 #include <algorithm>
 #include <pthread.h>
-#define BUFFERSIZE 8192*128
-#define BATCHSIZE BUFFERSIZE/8
+#define BUFFERSIZE (8192*128)
+#define BATCHSIZE (BUFFERSIZE/8)
 #define INTMAX 2147483647
 #define THREADNUM 8
 // R4 is an IO-Dense task, slightly more threads can make better use of cpu. 
