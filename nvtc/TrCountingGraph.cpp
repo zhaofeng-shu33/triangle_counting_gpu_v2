@@ -161,7 +161,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 #if VERBOSE
 	printf("Round 4, Record neighboors");
 #endif
-	int64_t batch_num = tr_graph->edge_num / BATCHSIZE;
+	int batch_num = tr_graph->edge_num / BATCHSIZE;
 	int64_t residual = tr_graph->edge_num % BATCHSIZE;
 	struct BATCH_R4_ARGS batch_r4_args_array[THREADNUM_R4];
 	for (int i = 0; i < THREADNUM_R4; i++){
