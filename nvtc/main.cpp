@@ -1,4 +1,4 @@
-#include "TrCountingGraph.h"
+#include "trCountingGraph.h"
 #if GPU
 #include "gpu.h"
 #endif
@@ -24,31 +24,31 @@ int main(int argc, char *argv[]) {
         printf("file %s file_name does not exist\n", file_name);
         exit(-1);
     }
-    TrCountingGraph TrCountingGraph(file_name);
+    TrCountingGraph trCountingGraph(file_name);
 
 #if TRCOUNTING
     int64_t result = 0;
 #if GPU    
     // Compute Split Information
-    int split_num = GetSplitNum(TrCountingGraph.nodeid_max,TrCountingGraph.offset[TrCountingGraph.nodeid_max+1]);
+    int split_num = GetSplitNum(trCountingGraph.nodeid_max,trCountingGraph.offset[trCountingGraph.nodeid_max+1]);
     int64_t* split_offset;
-    int64_t chunk_length_max = get_split_v2(TrCountingGraph.offset, TrCountingGraph.nodeid_max, split_num, split_offset);
+    int64_t chunk_length_max = get_split_v2(trCountingGraph.offset, trCountingGraph.nodeid_max, split_num, split_offset);
     
     // Last k% edges will be calculated by cpu.
-    int64_t cpu_offset = (int64_t) ((double)(TrCountingGraph.offset[TrCountingGraph.nodeid_max+1]) * (1-0.02));
+    int64_t cpu_offset = (int64_t) ((double)(trCountingGraph.offset[trCountingGraph.nodeid_max+1]) * (1-0.02));
     if (split_num > 1) {
         int64_t cpu_result = 0;
-        thread cpu_thread(cpu_counting_edge_first_v2,&TrCountingGraph,cpu_offset,&cpu_result);
-        result = GpuForwardSplit_v2(TrCountingGraph,split_num,cpu_offset);        
+        thread cpu_thread(cpu_counting_edge_first_v2,&trCountingGraph,cpu_offset,&cpu_result);
+        result = GpuForwardSplit_v2(trCountingGraph,split_num,cpu_offset);        
         cpu_thread.join();
         result = result + cpu_result;
     }
     else {
-        result = GpuForward_v2(TrCountingGraph);
+        result = GpuForward_v2(trCountingGraph);
     }
 #else
-    cpu_counting_edge_first_v2(TrCountingGraph, 0, &result);
+    cpu_counting_edge_first_v2(&trCountingGraph, 0, &result);
 #endif
-    printf("There are %" PRI64 " triangles in the input graph.\n", result);
+    printf("There are %" PRId64 " triangles in the input graph.\n", result);
 #endif
 }
