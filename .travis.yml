@@ -1,0 +1,19 @@
+os: linux
+dist: xenial
+language: cpp
+addons:
+  apt:
+    sources:
+      - sourceline: 'ppa:zhaofeng-shu33/gtest'    
+    packages:
+      - libgtest-dev
+install:
+  - pip install --user cpplint
+script:
+#  - cpplint test.cpp nvtc/*
+  - mkdir build
+  - python graph_generator.py
+  - cd build
+  - cmake -DENABLE_TESTING=ON -DCODEGPU=OFF ../
+  - make
+  - ./test_alg
