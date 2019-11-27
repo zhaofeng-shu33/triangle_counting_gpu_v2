@@ -27,7 +27,8 @@ int main(int argc, char *argv[]) {
     TrCountingGraph TrCountingGraph(file_name);
 
 #if TRCOUNTING
-    uint64_t result = 0;
+    int64_t result = 0;
+#if GPU    
     // Compute Split Information
     int split_num = GetSplitNum(TrCountingGraph.nodeid_max,TrCountingGraph.offset[TrCountingGraph.nodeid_max+1]);
     int64_t* split_offset;
@@ -35,7 +36,7 @@ int main(int argc, char *argv[]) {
     
     // Last k% edges will be calculated by cpu.
     int64_t cpu_offset = (int64_t) ((double)(TrCountingGraph.offset[TrCountingGraph.nodeid_max+1]) * (1-0.02));
-    if (split_num>1) {
+    if (split_num > 1) {
         int64_t cpu_result = 0;
         thread cpu_thread(cpu_counting_edge_first_v2,&TrCountingGraph,cpu_offset,&cpu_result);
         result = GpuForwardSplit_v2(TrCountingGraph,split_num,cpu_offset);        
@@ -45,6 +46,9 @@ int main(int argc, char *argv[]) {
     else {
         result = GpuForward_v2(TrCountingGraph);
     }
-    printf("There are %" PRIu64 " triangles in the input graph.\n", result);
+#else
+    cpu_counting_edge_first_v2(TrCountingGraph, 0, &result);
+#endif
+    printf("There are %" PRI64 " triangles in the input graph.\n", result);
 #endif
 }
