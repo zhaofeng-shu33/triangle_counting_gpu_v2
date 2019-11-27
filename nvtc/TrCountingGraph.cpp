@@ -62,7 +62,6 @@ int get_max_id(int* data, int64_t len) {
 void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name) {
 	// Temporal variables
 	char buffer[BUFFERSIZE];
-	char u_array[4], v_array[4];
 	int64_t counter = 0;
 	int *u, *v;
 	int x, y;
@@ -95,6 +94,11 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	for (int64_t i = 0; i < tr_graph->edge_num * 2; i += 6) {
 		// This is only a rough estimation, ignoring racing in multi-thread
 		// heuristically it is actually an estimation of degree
+		// why not using exact degree?
+		// Reason 1: the input data is polluted, exact degree is impossible 
+		// at this step;
+		// Reason 2: empirical experiments show that the triangle counting
+		// time is similar if using lock and i += 2 at this step.
 		degree_estimation[u[i]]++;
 		degree_estimation[u[i + 1]]++;
 	}
@@ -106,14 +110,19 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	int num_of_thread_locks = tr_graph->nodeid_max/LOCKSHARE + 1;
 	pthread_mutex_t* lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t) * num_of_thread_locks);
 	for(int i = 0; i < num_of_thread_locks; i++) {
+		// we do not use std::mutex as pthread_mutex is faster
 		pthread_mutex_init(&lock[i], NULL);
 	}
-	int* pointer;
+	int* pointer; // exact degree
 	pointer = (int*)malloc(sizeof(int) * (tr_graph->nodeid_max + 1));
 	memset(pointer, 0, sizeof(int) * (tr_graph->nodeid_max + 1));
 	struct GET_LENGTH_ARGS gen_length_args_array[THREADNUM];	
 	for (int i = 0; i < THREADNUM; i++) {
-		gen_length_args_array[i] = {u, tr_graph->edge_num * 2, 2 * i, 2*THREADNUM, lock, degree_estimation, pointer};
+		gen_length_args_array[i] = {u, tr_graph->edge_num * 2, 2 * i,
+			2 * THREADNUM, lock, degree_estimation, pointer};
+		// pthread_create only supports void* fun(void*),
+		// therefore constructing struct to pass multiple
+		// variable is necessary.
 		pthread_create(&ths[i], NULL, get_length, (void *)&gen_length_args_array[i]);
 	}
 
@@ -177,7 +186,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	for (i = 0; i < THREADNUM_R4; i++) {
 		pthread_join(ths[i], NULL);
 	}
-	counter = batch_num*(BATCHSIZE);
+	counter = batch_num * BATCHSIZE;
 	fseek(pFile, batch_num * BUFFERSIZE, SEEK_SET);
 	fread(buffer, 2 * sizeof(int), residual, pFile);
 
@@ -290,7 +299,7 @@ void* loadbatch_R4(void* args) {
 	int x,y;
 	int choice,shift;
 	int64_t counter;
-	for (int64_t k=from; k<length; k+=step){
+	for (int64_t k = from; k < length; k += step) {
 		fseek(pFile, k * BUFFERSIZE, SEEK_SET);
 		fread(buffer, 1, BUFFERSIZE, pFile);
 		counter = k*BATCHSIZE;
