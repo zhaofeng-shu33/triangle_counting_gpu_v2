@@ -1,6 +1,6 @@
 #pragma once
+#include <stdio.h>
 #include <stdint.h>
-#include <mutex>
 
 using namespace std;
 
@@ -27,8 +27,6 @@ class TrCountingGraph {
 		// total number of edges
 		int64_t edge_num;
 
-		//mutex* lock;
-		mutex fin_lock;
 };
 
 int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t*& out);

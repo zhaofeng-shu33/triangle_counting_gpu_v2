@@ -9,17 +9,20 @@
 
 
 TEST(tcv2, io_bin) {
-    TrCountingGraph TrCountingGraph("test_io.bin");
+    TrCountingGraph trCountingGraph("test_io.bin");
+    int64_t tcount;
+    cpu_counting_edge_first_v2(&trCountingGraph, 0, &tcount);
+    EXPECT_EQ(tcount, 1);
 #if GPU
-    uint64_t tcount = GpuForward_v2(TrCountingGraph);
+    tcount = GpuForward_v2(trCountingGraph);
     EXPECT_EQ(tcount, 1);
 #endif
 }
 
 TEST(tcv2, io_nvgraph) {
-    TrCountingGraph TrCountingGraph("test_io_nvgraph.bin");
+    TrCountingGraph trCountingGraph("test_io_nvgraph.bin");
 #if GPU
-    uint64_t tcount = GpuForward_v2(TrCountingGraph);
+    uint64_t tcount = GpuForward_v2(trCountingGraph);
     EXPECT_EQ(tcount, 3);
 #endif
 }

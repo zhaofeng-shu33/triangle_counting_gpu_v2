@@ -1,5 +1,6 @@
 Triangles Counting in CUDA GPU
 =========
+[![Build Status](https://travis-ci.com/zhaofeng-shu33/triangle_counting_gpu_v2.svg?branch=master)](https://travis-ci.com/zhaofeng-shu33/triangle_counting_gpu_v2)
 
 CUDA implementation of parallel algorithm for counting triangles.
 
