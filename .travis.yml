@@ -7,6 +7,7 @@ addons:
       - sourceline: 'ppa:zhaofeng-shu33/gtest'    
     packages:
       - libgtest-dev
+      - lcov
 install:
   - pip install --user cpplint
 script:

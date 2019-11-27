@@ -1,4 +1,7 @@
+#include "TrCountingGraph.h"
+#if GPU
 #include "gpu.h"
+#endif
 #include <cstring>
 #include <cassert>
 #include <cstdlib>
