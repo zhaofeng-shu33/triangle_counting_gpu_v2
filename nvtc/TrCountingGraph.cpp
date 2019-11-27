@@ -35,8 +35,6 @@ struct BATCH_R4_ARGS {
 
 using namespace std;
 
-void get_max(int*u, int64_t length, int64_t from, int64_t step, int* out);
-void get_degree(int*u, int64_t length, int64_t from, int64_t step, int* temp2);
 void* get_length(void* args);
 void* loadbatch_R4(void* args);
 void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name);

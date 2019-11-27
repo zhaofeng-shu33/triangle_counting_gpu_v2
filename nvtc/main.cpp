@@ -1,4 +1,4 @@
-#include "trCountingGraph.h"
+#include "TrCountingGraph.h"
 #if GPU
 #include "gpu.h"
 #endif
