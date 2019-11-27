@@ -35,3 +35,12 @@ TEST(io, get_edge_num) {
    EXPECT_EQ(size, 3);
 }
 
+TEST(io, get_max_id) {
+   FILE* pFile = fopen("test_io.bin", "rb");
+   int* data = (int*)malloc(sizeof(int) * 6);
+   fread(data, sizeof(int), 6, pFile);
+   int max_id = get_max_id(data, 6);
+   free(data);
+   fclose(pFile);
+   EXPECT_EQ(max_id, 2);
+}

@@ -49,6 +49,16 @@ int64_t get_edge_num(FILE* pFile) {
 	return size / 8;
 }
 
+int get_max_id(int* data, int64_t len) {
+	int max_node_id = 0;
+	#pragma omp parallel for reduction(max:max_node_id)
+	for (int64_t i = 0; i < len; i += 1) {
+		if (max_node_id < data[i])
+			max_node_id = data[i];
+	}
+	return max_node_id;
+}
+
 void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name) {
 	// Temporal variables
 	char buffer[BUFFERSIZE];
@@ -72,13 +82,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	tr_graph->entire_data = (char*)malloc(sizeof(char) * tr_graph->edge_num * 8);
 	fread(tr_graph->entire_data, 2 * sizeof(int), tr_graph->edge_num, pFile);
 	u = reinterpret_cast<int*>(tr_graph->entire_data);
-	int max_node_id = 0;
-	#pragma omp parallel for reduction(max:max_node_id)
-	for (int64_t i = 0; i < tr_graph->edge_num * 2; i += 1) {
-		if (max_node_id < u[i])
-			max_node_id = u[i];
-	}
-	tr_graph->nodeid_max = max_node_id;
+	tr_graph->nodeid_max = get_max_id(u, tr_graph->edge_num * 2);
 
 	//Round 2, Get node degree, use this to decide where a edge should store
 #if VERBOSE

@@ -33,3 +33,4 @@ int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t*& o
 void cpu_counting_edge_first_v2(TrCountingGraph* g, int64_t offset_start, int64_t* out);
 void sort_neighboor(TrCountingGraph* g);
 int64_t get_edge_num(FILE* file);
+int get_max_id(int* data, int64_t len);
