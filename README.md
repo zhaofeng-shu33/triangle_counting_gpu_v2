@@ -3,6 +3,14 @@ Triangles Counting in CUDA GPU
 
 CUDA implementation of parallel algorithm for counting triangles.
 
+## History
+This repository is spawned out of [triangle counting gpu](https://github.com/zhaofeng-shu33/triangle_counting_gpu).
+[Zhiyuan-Wu](https://github.com/Zhiyuan-Wu) implements it in a different approach and cannot be merged into master branch. Therefore this repository is created from the `c-factor` branch. Generally speaking, this repository is faster than the original implementation but it also brings some drawbacks:
+
+* CPU GPU coordinate parameter is hard coded
+* Thread Number, Batch size is hard coded
+* Using unix only header and is difficult to port to msvc on windows
+
 ## CSR format storage
 Suppose our graph has m edges and n nodes.
 we use sparse matrix (CSC) to store the graph. Two arrays are required, (n+1) length array
