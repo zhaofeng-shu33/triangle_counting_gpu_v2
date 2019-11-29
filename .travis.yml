@@ -1,23 +1,13 @@
-os: linux
-dist: xenial
+os: osx
 language: cpp
-addons:
-  apt:
-    sources:
-      - sourceline: 'ppa:zhaofeng-shu33/gtest'    
-    packages:
-      - libgtest-dev
-      - lcov
 install:
-  - pip install --user cpplint
+  - brew tap zhaofeng-shu33/liblemonformula
+  - brew install googletest 
 script:
 #  - cpplint test.cpp nvtc/*
   - mkdir build
   - python graph_generator.py
   - cd build
-  - cmake -DENABLE_TESTING=ON -DCODE_COVERAGE=ON -DCODEGPU=OFF ../
+  - cmake -DENABLE_TESTING=ON -DCODEGPU=OFF -DOPENMP=OFF ../
   - make
   - ./test_alg
-  - lcov --directory . --capture --output-file coverage.info
-  - lcov --remove coverage.info '/usr/*' --output-file coverage.info
-  - bash <(curl -s https://codecov.io/bash) -f coverage.info
