@@ -301,7 +301,7 @@ void* loadbatch_R4(void* args) {
 	int64_t counter;
 	for (int64_t k = from; k < length; k += step) {
 		fseek(pFile, k * BUFFERSIZE, SEEK_SET);
-		// fread(buffer, 1, BUFFERSIZE, pFile);
+		fread(buffer, 1, BUFFERSIZE, pFile);
 		counter = k*BATCHSIZE;
 		u = reinterpret_cast<int*>(buffer);
 		for (int j = 0; j < BATCHSIZE; j++) {
