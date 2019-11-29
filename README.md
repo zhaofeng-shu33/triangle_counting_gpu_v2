@@ -29,5 +29,5 @@ print(a)
 ```
 
 ## Counting Triangles
-The parallelism comes from the triangles containing each edge is independent from each other.
+The parallelism comes from the triangles containing of each edge is independent from each other.
  
