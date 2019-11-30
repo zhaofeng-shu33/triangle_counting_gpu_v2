@@ -30,4 +30,7 @@ print(a)
 
 ## Counting Triangles
 The parallelism comes from the triangles containing of each edge is independent from each other.
- 
+
+## New features
+* MPI CPU: run the program on three nodes, each node has 8 CPUs.
+* MPI GPU: run the program on three nodes, each node has 1 GPUs. 
