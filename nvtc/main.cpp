@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
         int64_t result_other_node;
         MPI_Status Stat;
         for(int i = 1; i < numtasks; i++) {
-            MPI_Recv(&result_other_node, 1, MPI_INT64_T, i, rank, MPI_COMM_WORLD, &Stat);
+            MPI_Recv(&result_other_node, 1, MPI_INT64_T, i, i, MPI_COMM_WORLD, &Stat);
             result += result_other_node;
         }
     }
