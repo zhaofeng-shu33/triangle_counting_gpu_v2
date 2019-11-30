@@ -75,7 +75,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	
 	//Round 1, Get max id
 #if VERBOSE
-	printf("Round 1, Get max id");
+	printf("Round 1, Get max id\n");
 #endif
 	tr_graph->nodeid_max = 0;
 	tr_graph->entire_data = (char*)malloc(sizeof(char) * tr_graph->edge_num * 8);
@@ -107,7 +107,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 
 	//Round 3, Get offset
 #if VERBOSE
-	printf("Round 3, Get offset");
+	printf("Round 3, Get offset\n");
 #endif
 	int num_of_thread_locks = tr_graph->nodeid_max/LOCKSHARE + 1;
 	pthread_mutex_t* lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t) * num_of_thread_locks);
@@ -176,7 +176,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	}  // tr_graph->offset[-1] save the edge num
 	// Round 4, Record neighboors
 #if VERBOSE
-	printf("Round 4, Record neighboors");
+	printf("Round 4, Record neighboors\n");
 #endif
 	int batch_num = tr_graph->edge_num / BATCHSIZE;
 	int64_t residual = tr_graph->edge_num % BATCHSIZE;

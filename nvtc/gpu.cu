@@ -280,11 +280,6 @@ int GetSplitNum(int num_nodes, uint64_t num_edges) {
   return (1 + 12 * (num_edges) / mem);
 }
 
-uint64_t GpuForwardMpi(const TrCountingGraph& trCountingGraph, int split_num, int rank, int num_nodes) {
-
-
-}
-
 uint64_t GpuForwardSplit_v2(const TrCountingGraph& TrCountingGraph, int split_num, int64_t cpu_offset,
     int gpu_offset_start, int gpu_offset_end) {
     CUCHECK(cudaSetDevice(0));
