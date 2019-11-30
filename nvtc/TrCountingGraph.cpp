@@ -339,21 +339,22 @@ int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t*& o
 	return max_length;
 }
 
-void cpu_counting_edge_first_v2(TrCountingGraph* g, int64_t offset_start, int64_t* out){
+void cpu_counting_edge_first_v2(TrCountingGraph* g, int64_t offset_start, 
+    int64_t offset_end, int64_t* out) {
     int64_t sum = 0;
     int iit = 0;
     int jit = 0;
     int d = 0;
     int i,j;
     #pragma omp parallel for schedule(dynamic,1024) reduction(+:sum) private(iit,jit,d,i,j)
-    for (int64_t k = offset_start; k < g->offset[g->nodeid_max+1]; k++) {
+    for (int64_t k = offset_start; k < offset_end; k++) {
         i = g->neighboor_start[k];
         j = g->neighboor[k];
         if(j == INTMAX)
             continue;
         iit = 0;
         jit = 0;
-        while(iit<g->degree[i] && jit<g->degree[j]){
+        while(iit<g->degree[i] && jit<g->degree[j]) {
             d = g->neighboor[g->offset[i]+iit]-g->neighboor[g->offset[j]+jit];
             if(d == 0) {
                 sum++;
@@ -363,7 +364,7 @@ void cpu_counting_edge_first_v2(TrCountingGraph* g, int64_t offset_start, int64_
             if(d < 0) {
                 iit++;
             }
-            if(d>0){
+            if(d > 0) {
                 jit++;
             }
         }

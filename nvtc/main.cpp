@@ -42,6 +42,7 @@ int main(int argc, char *argv[]) {
 
 #if TRCOUNTING
     int64_t result = 0;
+    int64_t cpu_offset_end = trCountingGraph.offset[trCountingGraph.nodeid_max + 1];
 #if GPU    
     // Compute Split Information
     int split_num = GetSplitNum(trCountingGraph.nodeid_max,trCountingGraph.offset[trCountingGraph.nodeid_max+1]);
@@ -49,11 +50,11 @@ int main(int argc, char *argv[]) {
     int64_t chunk_length_max = get_split_v2(trCountingGraph.offset, trCountingGraph.nodeid_max, split_num, split_offset);
     
     // Last k% edges will be calculated by cpu.
-    int64_t cpu_offset = (int64_t) ((double)(trCountingGraph.offset[trCountingGraph.nodeid_max+1]) * (1-0.02));
+    int64_t cpu_offset_start = (int64_t) ((double)(trCountingGraph.offset[trCountingGraph.nodeid_max+1]) * (1-0.02));
     if (split_num > 1) {
         int64_t cpu_result = 0;
-        thread cpu_thread(cpu_counting_edge_first_v2,&trCountingGraph,cpu_offset,&cpu_result);
-        result = GpuForwardSplit_v2(trCountingGraph,split_num,cpu_offset);        
+        thread cpu_thread(cpu_counting_edge_first_v2, &trCountingGraph, cpu_offset_start, cpu_offset_end, &cpu_result);
+        result = GpuForwardSplit_v2(trCountingGraph, split_num, cpu_offset_start);        
         cpu_thread.join();
         result = result + cpu_result;
     }
@@ -63,10 +64,10 @@ int main(int argc, char *argv[]) {
 #else
 #if USEMPI
     if (rank == 0) {
-        cpu_counting_edge_first_v2(&trCountingGraph, 0, &result);
+        cpu_counting_edge_first_v2(&trCountingGraph, 0, cpu_offset_end, &result);
     }
 #else
-    cpu_counting_edge_first_v2(&trCountingGraph, 0, &result);
+    cpu_counting_edge_first_v2(&trCountingGraph, 0, cpu_offset_end, &result);
 #endif
 #endif
 #if USEMPI
