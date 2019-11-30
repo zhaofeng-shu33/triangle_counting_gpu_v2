@@ -90,7 +90,9 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	int* degree_estimation;
 	degree_estimation = (int*)malloc(sizeof(int) * (tr_graph->nodeid_max + 1));
 	memset(degree_estimation, 0, sizeof(int) * (tr_graph->nodeid_max + 1));
+#ifndef USEMPI
 	#pragma omp parallel for
+#endif
 	for (int64_t i = 0; i < tr_graph->edge_num * 2; i += 6) {
 		// This is only a rough estimation, ignoring racing in multi-thread
 		// heuristically it is actually an estimation of degree
