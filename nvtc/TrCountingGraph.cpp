@@ -355,7 +355,7 @@ void cpu_counting_edge_first_v2(TrCountingGraph* g, int64_t offset_start,
         iit = 0;
         jit = 0;
         while(iit<g->degree[i] && jit<g->degree[j]) {
-            d = g->neighboor[g->offset[i]+iit]-g->neighboor[g->offset[j]+jit];
+            d = g->neighboor[g->offset[i] + iit] - g->neighboor[g->offset[j] + jit];
             if(d == 0) {
                 sum++;
                 iit++;

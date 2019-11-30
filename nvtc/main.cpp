@@ -35,7 +35,13 @@ int main(int argc, char *argv[]) {
 #endif
     char* file_name = argv[2];
     if (access(file_name, F_OK ) == -1) {
+#if USEMPI
+    if (rank == 0) {
+#endif
         printf("file %s file_name does not exist\n", file_name);
+#if USEMPI
+    }
+#endif
         exit(-1);
     }
     TrCountingGraph trCountingGraph(file_name);
@@ -50,7 +56,7 @@ int main(int argc, char *argv[]) {
     int64_t chunk_length_max = get_split_v2(trCountingGraph.offset, trCountingGraph.nodeid_max, split_num, split_offset);
     
     // Last k% edges will be calculated by cpu.
-    int64_t cpu_offset_start = (int64_t) ((double)(trCountingGraph.offset[trCountingGraph.nodeid_max+1]) * (1-0.02));
+    int64_t cpu_offset_start = (int64_t) ((double)(cpu_offset_end) * (1-0.02));
     if (split_num > 1) {
         int64_t cpu_result = 0;
         thread cpu_thread(cpu_counting_edge_first_v2, &trCountingGraph, cpu_offset_start, cpu_offset_end, &cpu_result);
@@ -63,8 +69,21 @@ int main(int argc, char *argv[]) {
     }
 #else
 #if USEMPI
+    int64_t cpu_offset_rank_start = rank * cpu_offset_end / numtasks;
+    int64_t cpu_offset_rank_end = (rank + 1) * cpu_offset_end / numtasks;
+    cpu_counting_edge_first_v2(&trCountingGraph, cpu_offset_rank_start, cpu_offset_rank_end, &result);
     if (rank == 0) {
-        cpu_counting_edge_first_v2(&trCountingGraph, 0, cpu_offset_end, &result);
+        // receive computing results from rank > 1
+        int64_t result_other_node;
+        MPI_Status Stat;
+        for(int i = 1; i < numtasks; i++) {
+            MPI_Recv(&result_other_node, 1, MPI_INT64_T, i, 1, MPI_COMM_WORLD, &Stat);
+            result += result_other_node;
+        }
+    }
+    else {
+       // send computing results to node with rank = 0
+       MPI_Send(&result, 1, MPI_INT64_T, 0, 1, MPI_COMM_WORLD);
     }
 #else
     cpu_counting_edge_first_v2(&trCountingGraph, 0, cpu_offset_end, &result);
