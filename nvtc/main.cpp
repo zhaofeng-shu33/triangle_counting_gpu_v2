@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     if (split_num > 1) {
         int64_t cpu_result = 0;
         thread cpu_thread(cpu_counting_edge_first_v2, &trCountingGraph, cpu_offset_start, cpu_offset_end, &cpu_result);
-        result = GpuForwardSplit_v2(trCountingGraph, split_num, cpu_offset_start);        
+        result = GpuForwardSplit_v2(trCountingGraph, split_num, cpu_offset_start, 0, split_num * split_num); 
         cpu_thread.join();
         result = result + cpu_result;
     }
