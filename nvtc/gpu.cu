@@ -60,7 +60,8 @@ __global__ void CalculateTrianglesSplit_v2(int n,const int64_t* __restrict__ dev
   for (int k = from; k < n; k += step) {
     int i =  dev_neighbor_start_i[k]; 
     int j =  dev_neighbor_i[k]; 
-    if (j==2147483647 || dev_offset[j]<dev_split_offset[chunkid_j] || dev_offset[j]>=dev_split_offset[chunkid_j+1]) continue;
+    if (j == 2147483647 || dev_offset[j] < dev_split_offset[chunkid_j] || dev_offset[j] >= dev_split_offset[chunkid_j+1]) 
+        continue;
     int64_t j_it = dev_offset[j]-dev_split_offset[chunkid_j];
     int64_t i_it = dev_offset[i]-dev_split_offset[chunkid_i];
     int64_t j_it_end = j_it+dev_length[j]-1;
@@ -278,7 +279,7 @@ int GetSplitNum(int num_nodes, uint64_t num_edges) {
   mem -= (uint64_t)num_nodes * 16;  // uint64_t
   return (1 + 12 * (num_edges) / mem);
 }
-uint64_t GpuForwardSplit_v2(const TrCountingGraph& TrCountingGraph, int split_num, int64_t cpu_offset){
+uint64_t GpuForwardSplit_v2(const TrCountingGraph& TrCountingGraph, int split_num, int64_t cpu_offset) {
   CUCHECK(cudaSetDevice(0));
   const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();
   
@@ -286,7 +287,7 @@ uint64_t GpuForwardSplit_v2(const TrCountingGraph& TrCountingGraph, int split_nu
   int64_t* split_offset;
   int64_t chunk_length_max = get_split_v2(TrCountingGraph.offset, TrCountingGraph.nodeid_max, split_num, split_offset);
 
-  // Call mem
+  // device memory initialization
   int64_t* dev_offset;
   int* dev_length;
   int* dev_neighbor_i;
@@ -316,7 +317,7 @@ uint64_t GpuForwardSplit_v2(const TrCountingGraph& TrCountingGraph, int split_nu
   cudaSetDevice(0);
   cudaFuncSetCacheConfig(CalculateTrianglesSplit_v2, cudaFuncCachePreferL1);
   int64_t result=0;
-  for(int i=0; i<split_num && split_offset[i]<cpu_offset; i++){
+  for(int i=0; i < split_num && split_offset[i] < cpu_offset; i++){
     for(int j=0; j<split_num;j++){
       CUCHECK(cudaMemcpyAsync(
         dev_neighbor_i, TrCountingGraph.neighboor+split_offset[i], (split_offset[i+1]-split_offset[i])*sizeof(int), cudaMemcpyHostToDevice));

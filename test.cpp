@@ -22,6 +22,7 @@ TEST(tcv2, io_bin) {
 
 TEST(tcv2, io_nvgraph) {
     TrCountingGraph trCountingGraph("test_io_nvgraph.bin");
+    EXPECT_EQ(trCountingGraph.edge_num, trCountingGraph.offset[trCountingGraph.nodeid_max + 1]);
 #if GPU
     uint64_t tcount = GpuForward_v2(trCountingGraph);
     EXPECT_EQ(tcount, 3);

@@ -173,8 +173,8 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	tr_graph->offset[0] = 0;
 	for (int64_t i = 1; i <= tr_graph->nodeid_max + 1; i++) {
 		tr_graph->offset[i] = tr_graph->offset[i - 1] + pointer[i - 1];
-	}
-	//Round 4, Record neighboors
+	}  // tr_graph->offset[-1] save the edge num
+	// Round 4, Record neighboors
 #if VERBOSE
 	printf("Round 4, Record neighboors");
 #endif
@@ -324,19 +324,19 @@ void* loadbatch_R4(void* args) {
 	return NULL;
 }
 
-int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t*& out){
+int64_t get_split_v2(int64_t* offset, int nodeid_max, int split_num, int64_t*& out) {
 	int64_t max_length = 0;
-	out = (int64_t*)malloc(sizeof(int64_t) * (split_num+1));
-	memset(out, 0, sizeof(int64_t) * (split_num+1));
+	out = (int64_t*)malloc(sizeof(int64_t) * (split_num + 1));
+	memset(out, 0, sizeof(int64_t) * (split_num + 1));
 	out[0] = 0;
-	for(int i=1;i<split_num;i++){
-		int64_t target = out[i-1]+(offset[nodeid_max+1])/split_num;
-		out[i] = *lower_bound(offset,offset+nodeid_max+2,target);
+	for(int i = 1; i < split_num; i++){
+		int64_t target = out[i - 1] + (offset[nodeid_max + 1]) / split_num;
+		out[i] = *lower_bound(offset, offset + nodeid_max + 2, target);
 	}
-	out[split_num] = offset[nodeid_max+1];
-	for(int i=1;i<=split_num;i++){
-		if(out[i]-out[i-1]>max_length)
-			max_length = out[i]-out[i-1];
+	out[split_num] = offset[nodeid_max + 1];
+	for(int i = 1; i <= split_num; i++){
+		if(out[i] - out[i-1] > max_length)
+			max_length = out[i] - out[i - 1];
 	}
 	return max_length;
 }
