@@ -48,10 +48,10 @@ int main(int argc, char *argv[]) {
 
 #if TRCOUNTING
     int64_t result = 0;
-    int64_t cpu_offset_end = trCountingGraph.offset[trCountingGraph.nodeid_max + 1];
+    int64_t cpu_offset_end = trCountingGraph.edge_num;
 #if GPU    
     // Compute Split Information
-    int split_num = GetSplitNum(trCountingGraph.nodeid_max,trCountingGraph.offset[trCountingGraph.nodeid_max+1]);
+    int split_num = GetSplitNum(trCountingGraph.nodeid_max, cpu_offset_end);
     int64_t* split_offset;
     int64_t chunk_length_max = get_split_v2(trCountingGraph.offset, trCountingGraph.nodeid_max, split_num, split_offset);
     
