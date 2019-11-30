@@ -11,7 +11,8 @@
 TEST(tcv2, io_bin) {
     TrCountingGraph trCountingGraph("test_io.bin");
     int64_t tcount;
-    cpu_counting_edge_first_v2(&trCountingGraph, 0, &tcount);
+    int64_t offset_end = trCountingGraph.offset[trCountingGraph.nodeid_max + 1];
+    cpu_counting_edge_first_v2(&trCountingGraph, 0, offset_end, &tcount);
     EXPECT_EQ(tcount, 1);
 #if GPU
     tcount = GpuForward_v2(trCountingGraph);
