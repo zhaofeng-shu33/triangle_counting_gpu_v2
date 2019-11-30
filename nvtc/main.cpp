@@ -11,7 +11,11 @@
 #include <thread>
 #include <inttypes.h>
 #include <unistd.h>
+#if USEMPI
+#include "mpi.h"
+#endif
 using namespace std;
+
 
 
 int main(int argc, char *argv[]) {
