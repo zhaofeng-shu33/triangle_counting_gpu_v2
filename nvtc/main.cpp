@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 
 #if TRCOUNTING
     int64_t result = 0;
-    int64_t cpu_offset_end = trCountingGraph.edge_num;
+    int64_t cpu_offset_end = trCountingGraph.offset[trCountingGraph.nodeid_max + 1];
 #if GPU    
     // Compute Split Information
     int split_num = GetSplitNum(trCountingGraph.nodeid_max, cpu_offset_end);
