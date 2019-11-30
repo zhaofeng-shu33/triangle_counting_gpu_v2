@@ -77,13 +77,13 @@ int main(int argc, char *argv[]) {
         int64_t result_other_node;
         MPI_Status Stat;
         for(int i = 1; i < numtasks; i++) {
-            MPI_Recv(&result_other_node, 1, MPI_INT64_T, i, 1, MPI_COMM_WORLD, &Stat);
+            MPI_Recv(&result_other_node, 1, MPI_INT64_T, i, rank, MPI_COMM_WORLD, &Stat);
             result += result_other_node;
         }
     }
     else {
        // send computing results to node with rank = 0
-       MPI_Send(&result, 1, MPI_INT64_T, 0, 1, MPI_COMM_WORLD);
+       MPI_Send(&result, 1, MPI_INT64_T, 0, rank, MPI_COMM_WORLD);
     }
 #else
     cpu_counting_edge_first_v2(&trCountingGraph, 0, cpu_offset_end, &result);
