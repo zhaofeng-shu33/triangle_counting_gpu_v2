@@ -317,8 +317,8 @@ uint64_t GpuForwardSplit_v2(const TrCountingGraph& TrCountingGraph, int split_nu
   cudaSetDevice(0);
   cudaFuncSetCacheConfig(CalculateTrianglesSplit_v2, cudaFuncCachePreferL1);
   int64_t result=0;
-  for(int i=0; i < split_num && split_offset[i] < cpu_offset; i++){
-    for(int j=0; j<split_num;j++){
+  for(int i = 0; i < split_num && split_offset[i] < cpu_offset; i++){
+    for(int j = 0; j < split_num; j++){
       CUCHECK(cudaMemcpyAsync(
         dev_neighbor_i, TrCountingGraph.neighboor+split_offset[i], (split_offset[i+1]-split_offset[i])*sizeof(int), cudaMemcpyHostToDevice));
       CUCHECK(cudaMemcpyAsync(

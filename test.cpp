@@ -46,3 +46,13 @@ TEST(io, get_max_id) {
    fclose(pFile);
    EXPECT_EQ(max_id, 2);
 }
+
+TEST(utility, ijpair) {
+   int i, j;
+   get_i_j(6, 35, &i, &j);
+   EXPECT_EQ(i, 5);
+   EXPECT_EQ(j, 5);
+   get_i_j(6, 10, &i, &j);
+   EXPECT_EQ(i, 1);
+   EXPECT_EQ(j, 4);
+}

@@ -373,3 +373,9 @@ void cpu_counting_edge_first_v2(TrCountingGraph* g, int64_t offset_start,
     }
     *out = sum;
 }
+
+//! decode (i, j) pair
+void get_i_j(int n, int ij, int* i, int* j) {
+    *i = ij / n;
+    *j = ij % n;
+}
