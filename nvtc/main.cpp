@@ -19,10 +19,20 @@ using namespace std;
 
 
 int main(int argc, char *argv[]) {
-    if (argc != 3 || strcmp(argv[1], "-f") != 0) {
-        printf("Usage: nvtc-variant -f input.bin\n");
-        exit(-1);
+#if USEMPI
+    int numtasks, rank;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank == 0) {
+#endif
+        if (argc != 3 || strcmp(argv[1], "-f") != 0) {
+            printf("Usage: nvtc-variant -f input.bin\n");
+            exit(-1);
+        }
+#if USEMPI
     }
+#endif
     char* file_name = argv[2];
     if (access(file_name, F_OK ) == -1) {
         printf("file %s file_name does not exist\n", file_name);
@@ -51,8 +61,24 @@ int main(int argc, char *argv[]) {
         result = GpuForward_v2(trCountingGraph);
     }
 #else
+#if USEMPI
+    if (rank == 0) {
+        cpu_counting_edge_first_v2(&trCountingGraph, 0, &result);
+    }
+#else
     cpu_counting_edge_first_v2(&trCountingGraph, 0, &result);
 #endif
-    printf("There are %" PRId64 " triangles in the input graph.\n", result);
+#endif
+#if USEMPI
+    if (rank == 0) {
+#endif
+        printf("There are %" PRId64 " triangles in the input graph.\n", result);
+#if USEMPI
+    }
+#endif    
+#endif
+
+#if USEMPI
+    MPI_Finalize();
 #endif
 }
