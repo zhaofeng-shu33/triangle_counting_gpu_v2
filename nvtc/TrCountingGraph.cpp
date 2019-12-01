@@ -74,7 +74,11 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	
 	//Round 1, Get max id
 #if VERBOSE
-	printf("Round 1, Get max id\n");
+    int rank = 0;
+#if MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+	printf("Rank %d: Round 1, Get max id\n", rank);
     time_t start_t = time(NULL);
 #endif
 	tr_graph->nodeid_max = 0;
@@ -87,9 +91,8 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 #if VERBOSE
     time_t end_t = time(NULL);
     int duration_t = end_t - start_t;
-    printf("Round 1 used %d seconds\n", duration_t);
+    printf("Rank %d: Round 1 used %d seconds; Round 2, Get degree\n", rank, duration_t);
     start_t = end_t;
-	printf("Round 2, Get degree\n");
 #endif
 	int* degree_estimation;
 	degree_estimation = (int*)malloc(sizeof(int) * (tr_graph->nodeid_max + 1));
@@ -114,8 +117,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
     end_t = time(NULL);
     duration_t = end_t - start_t;
     start_t = end_t;
-    printf("Round 2 used %d seconds\n", duration_t);
-	printf("Round 3, Get offset\n");
+    printf("Rank %d: Round 2 used %d seconds;Round 3, Get offset\n", rank, duration_t);
 #endif
 	int num_of_thread_locks = tr_graph->nodeid_max/LOCKSHARE + 1;
 	pthread_mutex_t* lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t) * num_of_thread_locks);
@@ -187,8 +189,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	end_t = time(NULL);
     duration_t = end_t - start_t;
     start_t = end_t;
-    printf("Round 3 used %d seconds\n", duration_t);
-    printf("Round 4, Record neighboors\n");
+    printf("Rank %d: Round 3 used %d seconds; Round 4, Record neighboors\n", rank, duration_t);
 #endif
     // batch_num must be int64_t
 	int64_t batch_num = tr_graph->edge_num / BATCHSIZE;
@@ -249,8 +250,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 #if VERBOSE
  	end_t = time(NULL);
     duration_t = end_t - start_t;
-    printf("Round 4 used %d seconds\n", duration_t);
-    printf("Read data done\n");
+    printf("Rank %d: Round 4 used %d seconds; Read data done\n", rank, duration_t);
 #endif
 }
 
