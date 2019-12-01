@@ -32,5 +32,6 @@ print(a)
 The parallelism comes from the triangles containing of each edge is independent from each other.
 
 ## New features
+We consider the case that the whole data can be put into the CPU memory but cannot be put into GPU memory.
 * MPI CPU: run the program on three nodes, each node has 8 CPUs.
 * MPI GPU: run the program on three nodes, each node has 1 GPUs. 
