@@ -1,9 +1,7 @@
 #include "TrCountingGraph.h"
 #include <stdlib.h>
-#include <string>
-#include <cstring>
-#include <ctime>
-#include <cstdlib>
+#include <string.h>
+#include <stdlib.h>
 #include <algorithm>
 #include <pthread.h>
 #if VERBOSE
@@ -212,10 +210,10 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	for (int64_t i = 0; i < tr_graph->edge_num-counter; i++) {
 		x = *(u + 2 * i);
 		y = *(u + 2 * i + 1);
-		if (x == y) continue;
+		if(x == y) continue;
 		choice = tr_graph->neighboor_start[counter + i] % 2;
 		shift = tr_graph->neighboor_start[counter + i] >> 1;
-		if (choice==0) {
+		if(choice==0) {
 			tr_graph->neighboor[tr_graph->offset[x] + shift] = y;
 		} else {
 			tr_graph->neighboor[tr_graph->offset[y] + shift] = x;
@@ -377,7 +375,7 @@ void cpu_counting_edge_first_v2(TrCountingGraph* g, int64_t offset_start,
             continue;
         iit = 0;
         jit = 0;
-        while(iit<g->degree[i] && jit<g->degree[j]) {
+        while(iit < g->degree[i] && jit < g->degree[j]) {
             d = g->neighboor[g->offset[i] + iit] - g->neighboor[g->offset[j] + jit];
             if(d == 0) {
                 sum++;
