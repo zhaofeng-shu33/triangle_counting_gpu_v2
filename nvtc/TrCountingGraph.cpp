@@ -6,6 +6,10 @@
 #include <cstdlib>
 #include <algorithm>
 #include <pthread.h>
+#if VERBOSE
+#include <sys/times.h>
+#include <time.h>
+#endif
 #define BUFFERSIZE (8192*128)
 #define BATCHSIZE (BUFFERSIZE/8)
 #define INTMAX 2147483647
@@ -67,7 +71,6 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	int x, y;
 	int node_max = 0;
 	pthread_t ths[THREADNUM_R4];
-	int i = 0;
 
 	// Compute edge num by file length
 	FILE* pFile = fopen(file_name, "rb");
@@ -128,7 +131,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 		pthread_create(&ths[i], NULL, get_length, (void *)&gen_length_args_array[i]);
 	}
 
-	for (i = 0; i < THREADNUM; i++) {
+	for (int i = 0; i < THREADNUM; i++) {
 		pthread_join(ths[i], NULL);
 	}
 	if (tr_graph->edge_num % 2==0) {
@@ -185,7 +188,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 		batch_r4_args_array[i] = {tr_graph, file_name, batch_num, i, THREADNUM_R4};
 		pthread_create(&ths[i], NULL, loadbatch_R4, (void *)&batch_r4_args_array[i]);
 	}
-	for (i = 0; i < THREADNUM_R4; i++) {
+	for (int i = 0; i < THREADNUM_R4; i++) {
 		pthread_join(ths[i], NULL);
 	}
 	counter = batch_num * BATCHSIZE;
