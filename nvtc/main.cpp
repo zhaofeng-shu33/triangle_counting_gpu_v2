@@ -11,6 +11,9 @@
 #include <thread>
 #include <inttypes.h>
 #include <unistd.h>
+#if VERBOSE
+#include <time.h>
+#endif
 #if USEMPI
 #include "mpi.h"
 #endif
@@ -47,6 +50,9 @@ int main(int argc, char *argv[]) {
     TrCountingGraph trCountingGraph(file_name);
 
 #if TRCOUNTING
+#if VERBOSE
+    time_t start_t = time(NULL);
+#endif
     int64_t result = 0;
     int64_t cpu_offset_end = trCountingGraph.offset[trCountingGraph.nodeid_max + 1];
 #if GPU    
@@ -95,6 +101,10 @@ int main(int argc, char *argv[]) {
        MPI_Send(&result, 1, MPI_INT64_T, 0, rank, MPI_COMM_WORLD);
     }
     if (rank == 0) {
+#endif
+#if VERBOSE
+        time_t end_t = time(NULL);
+        printf("Counting traingles used %d seconds\n", end_t - start_t);
 #endif
         printf("There are %" PRId64 " triangles in the input graph.\n", result);
 #if USEMPI
