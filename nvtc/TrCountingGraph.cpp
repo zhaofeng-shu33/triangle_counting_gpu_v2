@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <pthread.h>
 #if VERBOSE
-#include <sys/times.h>
 #include <time.h>
 #endif
 #define BUFFERSIZE (8192*128)
@@ -71,7 +70,6 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	int x, y;
 	int node_max = 0;
 	pthread_t ths[THREADNUM_R4];
-
 	// Compute edge num by file length
 	FILE* pFile = fopen(file_name, "rb");
 	tr_graph->edge_num = get_edge_num(pFile);
@@ -79,6 +77,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	//Round 1, Get max id
 #if VERBOSE
 	printf("Round 1, Get max id\n");
+    time_t start_t = time(NULL);
 #endif
 	tr_graph->nodeid_max = 0;
 	tr_graph->entire_data = (char*)malloc(sizeof(char) * tr_graph->edge_num * 8);
@@ -88,6 +87,10 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 
 	//Round 2, Get node degree, use this to decide where a edge should store
 #if VERBOSE
+    time_t end_t = time(NULL);
+    int duration_t = end_t - start_t;
+    printf("Round 1 used %d seconds\n", duration_t);
+    start_t = end_t;
 	printf("Round 2, Get degree\n");
 #endif
 	int* degree_estimation;
@@ -110,6 +113,10 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 
 	//Round 3, Get offset
 #if VERBOSE
+    end_t = time(NULL);
+    duration_t = end_t - start_t;
+    start_t = end_t;
+    printf("Round 2 used %d seconds\n", duration_t);
 	printf("Round 3, Get offset\n");
 #endif
 	int num_of_thread_locks = tr_graph->nodeid_max/LOCKSHARE + 1;
@@ -179,7 +186,11 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	}  // tr_graph->offset[-1] save the edge num
 	// Round 4, Record neighboors
 #if VERBOSE
-	printf("Round 4, Record neighboors\n");
+	end_t = time(NULL);
+    duration_t = end_t - start_t;
+    start_t = end_t;
+    printf("Round 3 used %d seconds\n", duration_t);
+    printf("Round 4, Record neighboors\n");
 #endif
 	int64_t batch_num = tr_graph->edge_num / BATCHSIZE;
 	int64_t residual = tr_graph->edge_num % BATCHSIZE;
@@ -237,6 +248,9 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	}
 	sort_neighboor(tr_graph);
 #if VERBOSE
+ 	end_t = time(NULL);
+    duration_t = end_t - start_t;
+    printf("Round 4 used %d seconds\n", duration_t);
     printf("Read data done\n");
 #endif
 }
