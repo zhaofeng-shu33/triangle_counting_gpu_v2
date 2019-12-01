@@ -52,7 +52,7 @@ __global__ void UnzipEdges(int m, int* edges, int* unzipped_edges) {
 __global__ void CalculateTrianglesSplit_v2(int n,const int64_t* __restrict__ dev_offset,
     const int* __restrict__ dev_length,const int* __restrict__ dev_neighbor_i,
     const int* __restrict__ dev_neighbor_start_i, const int* __restrict__ dev_neighbor_j,
-    const int* __restrict__ dev_neighbor_start_j, const int64_t* __restrict__ dev_split_offset,
+    const int64_t* __restrict__ dev_split_offset,
     int chunkid_i, int chunkid_j, uint64_t* results, int deviceCount = 1, int deviceIdx = 0) {
     int from =
     gridDim.x * blockDim.x * deviceIdx +
@@ -97,9 +97,6 @@ __global__ void CalculateTriangles_v2(int n,const int* __restrict__ dev_neighbor
   int step = deviceCount * gridDim.x * blockDim.x;
   
   uint64_t count = 0;
-  //for (int i = from; i < n; i += step) {	
-    //for(int u = 0; u <= dev_length[i]-1; u++){
-      //int j = dev_neighbor[dev_offset[i]+u];
   for (int k = from; k < n; k += step) {
     int i =  dev_neighbor_start[k]; 
     int j =  dev_neighbor[k]; 
