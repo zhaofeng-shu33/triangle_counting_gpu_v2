@@ -82,7 +82,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	tr_graph->nodeid_max = 0;
 	tr_graph->entire_data = (char*)malloc(sizeof(char) * tr_graph->edge_num * 8);
 	fread(tr_graph->entire_data, 2 * sizeof(int), tr_graph->edge_num, pFile);
-	u = reinterpret_cast<int*>(tr_graph->entire_data);
+	u = (int*)(tr_graph->entire_data);
 	tr_graph->nodeid_max = get_max_id(u, tr_graph->edge_num * 2);
 
 	//Round 2, Get node degree, use this to decide where a edge should store
@@ -141,6 +141,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	for (int i = 0; i < THREADNUM; i++) {
 		pthread_join(ths[i], NULL);
 	}
+    // (1,2,3,4,5,6) -> (1,3,5,2,4,6)
 	if (tr_graph->edge_num % 2==0) {
 		#pragma omp parallel for
 		for (int64_t i = tr_graph->edge_num; i <= 2 * tr_graph->edge_num; i+=2) {
@@ -169,7 +170,6 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 		}
 	}
 	
-	//delete[] entire_data;
 	for(int i = 0; i < num_of_thread_locks; i++) {
 		pthread_mutex_destroy(&lock[i]);
 	}
@@ -192,6 +192,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
     printf("Round 3 used %d seconds\n", duration_t);
     printf("Round 4, Record neighboors\n");
 #endif
+    // batch_num must be int64_t
 	int64_t batch_num = tr_graph->edge_num / BATCHSIZE;
 	int64_t residual = tr_graph->edge_num % BATCHSIZE;
 	struct BATCH_R4_ARGS batch_r4_args_array[THREADNUM_R4];
@@ -206,7 +207,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	fseek(pFile, batch_num * BUFFERSIZE, SEEK_SET);
 	fread(buffer, 2 * sizeof(int), residual, pFile);
 
-	u = reinterpret_cast<int*>(buffer);
+	u = (int*)(buffer);
 	int choice, shift;
 	for (int64_t i = 0; i < tr_graph->edge_num-counter; i++) {
 		x = *(u + 2 * i);
@@ -324,8 +325,8 @@ void* loadbatch_R4(void* args) {
 	for (int64_t k = from; k < length; k += step) {
 		fseek(pFile, k * BUFFERSIZE, SEEK_SET);
 		fread(buffer, 1, BUFFERSIZE, pFile);
-		counter = k*BATCHSIZE;
-		u = reinterpret_cast<int*>(buffer);
+		counter = k * BATCHSIZE;
+		u = (int*)(buffer);
 		for (int j = 0; j < BATCHSIZE; j++) {
 			x = *(u + 2 * j);
 			y = *(u + 2 * j + 1);
