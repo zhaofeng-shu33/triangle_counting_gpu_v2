@@ -117,7 +117,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
     end_t = time(NULL);
     duration_t = end_t - start_t;
     start_t = end_t;
-    printf("Rank %d: Round 2 used %d seconds;Round 3, Get offset\n", rank, duration_t);
+    printf("Rank %d: Round 2 used %d seconds; Round 3, Get offset\n", rank, duration_t);
 #endif
 	int num_of_thread_locks = tr_graph->nodeid_max/LOCKSHARE + 1;
 	pthread_mutex_t* lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t) * num_of_thread_locks);
