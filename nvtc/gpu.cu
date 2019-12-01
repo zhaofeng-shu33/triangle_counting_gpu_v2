@@ -49,7 +49,7 @@ __global__ void UnzipEdges(int m, int* edges, int* unzipped_edges) {
     unzipped_edges[m + i] = edges[2 * i + 1];
   }
 }
-__global__ void CalculateTrianglesSplit_v2(int n,const int64_t* __restrict__ dev_offset,
+__global__ void CalculateTrianglesSplit_v2(int n, const int64_t* __restrict__ dev_offset,
     const int* __restrict__ dev_degree,const int* __restrict__ dev_neighbor_i,
     const int* __restrict__ dev_neighbor_start_i, const int* __restrict__ dev_neighbor_j,
     const int64_t* __restrict__ dev_split_offset,
@@ -86,9 +86,9 @@ __global__ void CalculateTrianglesSplit_v2(int n,const int64_t* __restrict__ dev
   results[blockDim.x * blockIdx.x + threadIdx.x] = count;
 }
 
-__global__ void CalculateTriangles_v2(int n,const int* __restrict__ dev_neighbor,
-    const int64_t* __restrict__ dev_offset,const int* __restrict__ dev_degree,
-    const int* __restrict__ dev_neighbor_start, uint64_t* results,int deviceCount = 1,
+__global__ void CalculateTriangles_v2(int n, const int* __restrict__ dev_neighbor,
+    const int64_t* __restrict__ dev_offset, const int* __restrict__ dev_degree,
+    const int* __restrict__ dev_neighbor_start, uint64_t* results, int deviceCount = 1,
     int deviceIdx = 0) {
     int from =
     gridDim.x * blockDim.x * deviceIdx +
