@@ -39,7 +39,7 @@ if(CODEGPU)
 endif()
 if(MPI)
     target_compile_definitions(nvtc_variant PUBLIC "-DUSEMPI=1")
-    target_link_libraries(nvtc-variant ${MPI_CXX_LIBRARIES})
+    target_link_libraries(nvtc_variant PUBLIC ${MPI_CXX_LIBRARIES})
 endif()
 target_link_libraries(nvtc-variant nvtc_variant)
 

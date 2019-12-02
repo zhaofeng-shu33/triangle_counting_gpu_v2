@@ -7,6 +7,9 @@
 #if VERBOSE
 #include <time.h>
 #endif
+#if USEMPI
+#include <mpi.h>
+#endif
 #define BUFFERSIZE (8192*128)
 #define BATCHSIZE (BUFFERSIZE/8)
 #define INTMAX 2147483647
@@ -75,7 +78,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
 	//Round 1, Get max id
 #if VERBOSE
     int rank = 0;
-#if MPI
+#if USEMPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
 	printf("Rank %d: Round 1, Get max id\n", rank);
