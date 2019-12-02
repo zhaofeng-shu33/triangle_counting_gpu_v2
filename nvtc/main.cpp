@@ -112,8 +112,6 @@ int main(int argc, char *argv[]) {
         time_t end_t = time(NULL);
         printf("Counting traingles used %d seconds\n", end_t - start_t);
 #endif
-        printf("edge num: %" PRId64 "\n", trCountingGraph.edge_num);
-        printf("max offset: %" PRId64 "\n", trCountingGraph.offset[trCountingGraph.nodeid_max + 1]);
         printf("There are %" PRId64 " triangles in the input graph.\n", result);
 #if USEMPI
     }
