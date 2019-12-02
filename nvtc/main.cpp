@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     int split_num = GetSplitNum(trCountingGraph.nodeid_max, cpu_offset_end);
     
     // Last k% edges will be calculated by cpu.
-    if (split_num > 1) {
+    if(split_num > 1) {
 #if USEMPI
         int gpu_offset_rank_start = split_num * split_num * rank / numtasks;
         int gpu_offset_rank_end = split_num * split_num * (rank + 1) / numtasks;
@@ -75,7 +75,13 @@ int main(int argc, char *argv[]) {
 #endif
     }
     else {
+#if USEMPI
+        if(rank == 0) {
+            result = GpuForward_v2(trCountingGraph);
+        }
+#else
         result = GpuForward_v2(trCountingGraph);
+#endif
     }
 #else
 #if USEMPI
