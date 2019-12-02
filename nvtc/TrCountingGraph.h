@@ -9,7 +9,7 @@ class TrCountingGraph {
 	public:
 		// Construct Function
 		TrCountingGraph(const char* file_name);
-
+        ~TrCountingGraph();
 		// node ID -> neighboor table offset from int* neighboor.
 		int64_t* offset;
 

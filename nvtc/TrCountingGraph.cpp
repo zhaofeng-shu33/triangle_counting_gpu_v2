@@ -46,6 +46,12 @@ TrCountingGraph::TrCountingGraph(const char* file_name) {
     construct_trCountingGraph(this, file_name);
 }
 
+TrCountingGraph::~TrCountingGraph() {
+    free(entire_data);
+    free(offset);
+    free(degree);
+}
+
 int64_t get_edge_num(FILE* pFile) {
     fseek(pFile, 0, SEEK_END);
     int64_t size = ftell(pFile);
@@ -186,7 +192,7 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
     tr_graph->offset[0] = 0;
     for (int64_t i = 1; i <= tr_graph->nodeid_max + 1; i++) {
         tr_graph->offset[i] = tr_graph->offset[i - 1] + pointer[i - 1];
-    }  // tr_graph->offset[-1] save the edge num
+    }  // tr_graph->offset[-1] is the edge num minus the number of loops in the graph
     // Round 4, Record neighboors
 #if VERBOSE
     end_t = time(NULL);
