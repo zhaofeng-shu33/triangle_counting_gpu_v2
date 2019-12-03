@@ -245,7 +245,7 @@ uint64_t GpuForward(int* edges, int num_nodes, uint64_t num_edges) {
 uint64_t GpuForward_v2(const TrCountingGraph& TrCountingGraph) {
     const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();
     TrCountingGraphChunk chunk(TrCountingGraph, 1);
-    chunk.initAll();
+
     uint64_t* dev_results;
     CUCHECK(cudaMalloc(&dev_results,
           NUM_BLOCKS * NUM_THREADS * sizeof(uint64_t)));
@@ -365,18 +365,26 @@ TrCountingGraphChunk::TrCountingGraphChunk(const TrCountingGraph& g, int split_n
   CUCHECK(cudaMalloc(&dev_offset, (g.nodeid_max + 2) * sizeof(int64_t)));
   CUCHECK(cudaMemcpy(
       dev_offset, g.offset, (g.nodeid_max + 2) * sizeof(int64_t), cudaMemcpyHostToDevice));
-  CUCHECK(cudaDeviceSynchronize());
   CUCHECK(cudaMalloc(&dev_degree, (g.nodeid_max + 1) * sizeof(int)));
   CUCHECK(cudaMemcpy(
       dev_degree, g.degree, (g.nodeid_max + 1) * sizeof(int), cudaMemcpyHostToDevice));
-  CUCHECK(cudaDeviceSynchronize());
   CUCHECK(cudaMalloc(&dev_split_offset, (split_num + 1) * sizeof(int64_t)));
   CUCHECK(cudaMemcpy(
       dev_split_offset, split_offset, (split_num + 1) * sizeof(int64_t), cudaMemcpyHostToDevice));
-  CUCHECK(cudaDeviceSynchronize());
-  CUCHECK(cudaMalloc(&dev_neighbor_i, chunk_length_max * sizeof(int)));
-  CUCHECK(cudaMalloc(&dev_neighbor_start_i, chunk_length_max * sizeof(int)));
-  CUCHECK(cudaMalloc(&dev_neighbor_j, chunk_length_max * sizeof(int)));
+  if(split_num==1){
+    CUCHECK(cudaMalloc(&dev_neighbor, (g.edge_num) * sizeof(int)));
+    CUCHECK(cudaMemcpy(
+       dev_neighbor, g.neighboor, (g.edge_num) * sizeof(int), cudaMemcpyHostToDevice));
+    CUCHECK(cudaMalloc(&dev_neighbor_start, (g.edge_num) * sizeof(int)));
+    CUCHECK(cudaMemcpy(
+       dev_neighbor_start, g.neighboor_start, (g.edge_num) * sizeof(int), cudaMemcpyHostToDevice));
+  }
+  else{
+    CUCHECK(cudaMalloc(&dev_neighbor_i, chunk_length_max * sizeof(int)));
+    CUCHECK(cudaMalloc(&dev_neighbor_start_i, chunk_length_max * sizeof(int)));
+    CUCHECK(cudaMalloc(&dev_neighbor_j, chunk_length_max * sizeof(int)));
+  }
+  
   cudaFuncSetCacheConfig(CalculateTrianglesSplit_v2, cudaFuncCachePreferL1);
 }
 void TrCountingGraphChunk::initChunk(int i, int j){
@@ -388,16 +396,4 @@ void TrCountingGraphChunk::initChunk(int i, int j){
     dev_neighbor_start_i, Graph->neighboor_start+split_offset[i], (split_offset[i+1]-split_offset[i])*sizeof(int), cudaMemcpyHostToDevice));
   CUCHECK(cudaMemcpy(
     dev_neighbor_j, Graph->neighboor+split_offset[j], (split_offset[j+1]-split_offset[j])*sizeof(int), cudaMemcpyHostToDevice));
-  CUCHECK(cudaDeviceSynchronize());
-}
-void TrCountingGraphChunk::initAll(void){
-  CUCHECK(cudaSetDevice(0));
-  CUCHECK(cudaMalloc(&dev_neighbor, (Graph->edge_num) * sizeof(int)));
-  CUCHECK(cudaMemcpy(
-     dev_neighbor, Graph->neighboor, (Graph->edge_num) * sizeof(int), cudaMemcpyHostToDevice));
-  CUCHECK(cudaDeviceSynchronize());
-  CUCHECK(cudaMalloc(&dev_neighbor_start, (Graph->edge_num) * sizeof(int)));
-  CUCHECK(cudaMemcpy(
-     dev_neighbor_start, Graph->neighboor_start, (Graph->edge_num) * sizeof(int), cudaMemcpyHostToDevice));
-  CUCHECK(cudaDeviceSynchronize());
 }

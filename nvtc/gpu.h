@@ -15,7 +15,6 @@ class TrCountingGraphChunk{
     public:
         TrCountingGraphChunk(const TrCountingGraph &g, int split_num);
         void initChunk(int i, int j);
-        void initAll();
         const TrCountingGraph* Graph;
         int64_t* split_offset;
         int split_num;
