@@ -84,8 +84,10 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
     //Round 1, Get max id
 #if VERBOSE
     int rank = 0;
+	int numtasks = 0;
 #if USEMPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
 #endif
     printf("Rank %d: Round 1, Get max id\n", rank);
     time_t start_t = time(NULL);
@@ -103,23 +105,38 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
     printf("Rank %d: Round 1 used %d seconds; Round 2, Get degree\n", rank, duration_t);
     start_t = end_t;
 #endif
-    int* degree_estimation;
-    degree_estimation = (int*)malloc(sizeof(int) * (tr_graph->nodeid_max + 1));
-    memset(degree_estimation, 0, sizeof(int) * (tr_graph->nodeid_max + 1));
-#ifndef USEMPI
-    #pragma omp parallel for
+	int* degree_estimation;
+	degree_estimation = (int*)malloc(sizeof(int) * (tr_graph->nodeid_max + 1));
+	memset(degree_estimation, 0, sizeof(int) * (tr_graph->nodeid_max + 1));
+#if USEMPI
+	MPI_Status Stat;
+	if(rank==0){
+		#pragma omp parallel for
+		for (int64_t i = 0; i < tr_graph->edge_num * 2; i += 6) {
+			// This is only a rough estimation, ignoring racing in multi-thread
+			// heuristically it is actually an estimation of degree
+			// why not using exact degree?
+			// Reason 1: the input data is polluted, exact degree is impossible 
+			// at this step;
+			// Reason 2: empirical experiments show that the triangle counting
+			// time is similar if using lock and i += 2 at this step.
+			degree_estimation[u[i]]++;
+			degree_estimation[u[i + 1]]++;
+		}
+		for(int i = 1; i < numtasks; i++) {
+			MPI_Send(degree_estimation, (tr_graph->nodeid_max + 1), MPI_INT, i, i, MPI_COMM_WORLD);
+		}
+	}
+	else{
+		MPI_Recv(degree_estimation, (tr_graph->nodeid_max + 1), MPI_INT, 0, rank, MPI_COMM_WORLD, &Stat);
+	}
+#else
+	#pragma omp parallel for
+	for (int64_t i = 0; i < tr_graph->edge_num * 2; i += 6) {
+		degree_estimation[u[i]]++;
+		degree_estimation[u[i + 1]]++;
+	}
 #endif
-    for (int64_t i = 0; i < tr_graph->edge_num * 2; i += 6) {
-        // This is only a rough estimation, ignoring racing in multi-thread
-        // heuristically it is actually an estimation of degree
-        // why not using exact degree?
-        // Reason 1: the input data is polluted, exact degree is impossible 
-        // at this step;
-        // Reason 2: empirical experiments show that the triangle counting
-        // time is similar if using lock and i += 2 at this step.
-        degree_estimation[u[i]]++;
-        degree_estimation[u[i + 1]]++;
-    }
 
     //Round 3, Get offset
 #if VERBOSE
