@@ -1,3 +1,4 @@
+#include "nvtc/config.h"
 #include "TrCountingGraph.h"
 #include <stdlib.h>
 #include <string.h>
@@ -10,13 +11,6 @@
 #if USEMPI
 #include <mpi.h>
 #endif
-#define BUFFERSIZE (8192*128)
-#define BATCHSIZE (BUFFERSIZE/8)
-#define INTMAX 2147483647
-#define THREADNUM 8
-// R4 is an IO-Dense task, slightly more threads can make better use of cpu. 
-#define THREADNUM_R4 10
-#define LOCKSHARE 10
 
 struct GET_LENGTH_ARGS {
     int* u;

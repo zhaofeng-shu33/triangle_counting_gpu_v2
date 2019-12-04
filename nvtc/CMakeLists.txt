@@ -1,3 +1,4 @@
+configure_file(config.h.in config.h)
 if(CODEGPU)
     add_library(nvtc_variant_cu gpu.cu gpu-thrust.cu)
     if("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
