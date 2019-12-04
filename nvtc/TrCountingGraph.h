@@ -1,7 +1,7 @@
 #pragma once
 #include <stdio.h>
 #include <stdint.h>
-
+#include <nvtc/config.h>
 using namespace std;
 
 

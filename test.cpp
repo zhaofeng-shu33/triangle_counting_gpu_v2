@@ -1,7 +1,7 @@
 // Copyright 2019 zhaofeng-shu33
 #include <stdio.h>
 #include <gtest/gtest.h>  // NOLINT(build/include_order)
-
+#include <nvtc/config.h>
 #include <nvtc/TrCountingGraph.h>
 #if GPU
 #include <nvtc/gpu.h>

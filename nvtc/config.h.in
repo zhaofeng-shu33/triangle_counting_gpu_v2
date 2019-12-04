@@ -1,3 +1,4 @@
+#define GPU @GPU@
 #define BUFFERSIZE (8192*128)
 #define BATCHSIZE (BUFFERSIZE/8)
 #define INTMAX 2147483647

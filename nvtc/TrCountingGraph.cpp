@@ -1,4 +1,3 @@
-#include "nvtc/config.h"
 #include "TrCountingGraph.h"
 #include <stdlib.h>
 #include <string.h>
