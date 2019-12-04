@@ -13,13 +13,21 @@ uint64_t MultiGpuForward(int* edges, int device_count, int num_nodes, uint64_t n
 
 class TrCountingGraphChunk{
     public:
+        // Constructor, Initilize everything we need in gpu. 
+        // Note: In split version data like dev_neighbor_i is not initilized by this constrictor. call initChunk(int i, int j) to clear what you need.
         TrCountingGraphChunk(const TrCountingGraph &g, int split_num);
+        
+        // Get chunk i and j ready in gpu.
         void initChunk(int i, int j);
+        
+        // members in main mem
         const TrCountingGraph* Graph;
         int64_t* split_offset;
         int split_num;
         int64_t chunk_length_max;
 
+        // members in gpu mem
+        TrCountingGraphChunk* dev_this;
         int64_t* dev_offset;
         int* dev_degree;
         int* dev_neighbor_i;
