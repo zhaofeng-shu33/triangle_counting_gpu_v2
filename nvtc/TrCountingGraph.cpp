@@ -76,13 +76,13 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
     tr_graph->edge_num = get_edge_num(pFile);
     
     //Round 1, Get max id
-#if VERBOSE
+#if USEMPI
     int rank = 0;
 	int numtasks = 0;
-#if USEMPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
 #endif
+#if VERBOSE
     printf("Rank %d: Round 1, Get max id\n", rank);
     time_t start_t = time(NULL);
 #endif
