@@ -10,4 +10,4 @@
 // R4 is an IO-Dense task, slightly more threads can make better use of cpu. 
 #define THREADNUM_R4 (@THREADNUM_NVTC@+2)
 #define LOCKSHARE 10
-
+#define _MWAITXINTRIN_H_INCLUDED
