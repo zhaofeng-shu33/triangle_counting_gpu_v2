@@ -10,13 +10,6 @@
 #if USEMPI
 #include <mpi.h>
 #endif
-#define BUFFERSIZE (8192*128)
-#define BATCHSIZE (BUFFERSIZE/8)
-#define INTMAX 2147483647
-#define THREADNUM 8
-// R4 is an IO-Dense task, slightly more threads can make better use of cpu. 
-#define THREADNUM_R4 10
-#define LOCKSHARE 10
 
 struct GET_LENGTH_ARGS {
     int* u;
@@ -82,8 +75,8 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
     tr_graph->edge_num = get_edge_num(pFile);
     
     //Round 1, Get max id
-#if USEMPI
     int rank = 0;
+#if USEMPI
 	int numtasks = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
