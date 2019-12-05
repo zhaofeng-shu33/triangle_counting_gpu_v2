@@ -1,4 +1,5 @@
 #pragma once
+#include <nvtc/config.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <nvtc/config.h>
