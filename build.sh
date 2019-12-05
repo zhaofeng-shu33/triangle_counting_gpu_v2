@@ -1,6 +1,6 @@
 #!/bin/bash
 bash /etc/profile.d/modules.sh
-module load cuda10.0/toolkit slurm
+module load cuda10.0/toolkit slurm openmpi/gcc/64/1.10.7 
 set -e -x
 mkdir build
 python3 graph_generator.py
