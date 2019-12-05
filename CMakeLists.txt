@@ -1,13 +1,21 @@
 cmake_minimum_required(VERSION 3.12)
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_BINARY_DIR})
+
+# add feature
 option(CODEGPU "codes can be run on GPU" ON)
 option(TRCOUNTING "counting the number of triangles" ON)
 option(VERBOSE "verbose mode" OFF)
 option(OPENMP "use openmp" ON)
+option(MPI "enable MPI" OFF)
+
+# add compiler switch
 option(PROF "gprofile compilation" OFF)
 option(CODE_COVERAGE "Enable coverage reporting" OFF)
-option(MPI "enable MPI" OFF)
+
+# add finer control
+set(THREADNUM 8 CACHE STRING "multi thread number, default to 8")
+
 if(CODEGPU)
   project(triangle_counting_gpu_variant CUDA CXX)
 else()
@@ -27,6 +35,7 @@ set_flags("CODEGPU" ${CODEGPU})
 set_flags("OPENMP" ${OPENMP})
 set_flags("TRCOUNTING" ${TRCOUNTING})
 set_flags("MPI" ${MPI})
+set(THREADNUM_NVTC ${THREADNUM})
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(CODEGPU)
