@@ -5,7 +5,7 @@
 #define USEMPI @MPI_NVTC@
 #define BUFFERSIZE (8192*128)
 #define THREADNUM @THREADNUM_NVTC@
-#define BATCHSIZE (BUFFERSIZE/@THREADNUM_NVTC@)
+#define BATCHSIZE (BUFFERSIZE/8)
 #define INTMAX 2147483647
 // R4 is an IO-Dense task, slightly more threads can make better use of cpu. 
 #define THREADNUM_R4 (@THREADNUM_NVTC@+2)
