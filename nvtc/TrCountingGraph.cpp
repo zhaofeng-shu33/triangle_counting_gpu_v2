@@ -75,8 +75,8 @@ void construct_trCountingGraph(TrCountingGraph* tr_graph, const char* file_name)
     tr_graph->edge_num = get_edge_num(pFile);
     
     //Round 1, Get max id
-#if USEMPI
     int rank = 0;
+#if USEMPI
 	int numtasks = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
