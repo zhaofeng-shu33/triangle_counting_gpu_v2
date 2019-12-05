@@ -1,0 +1,16 @@
+version: 2.1
+executors:
+  my-executor:
+    docker:
+      - image: zhaofengshu33/cudatoolkit:latest
+jobs:
+  build:
+    executor: my-executor
+    steps:
+      - checkout
+      - run: bash docker-build.sh
+workflows:
+  version: 2
+  experiment:
+    jobs:
+      - build
