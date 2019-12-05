@@ -13,3 +13,14 @@ srun -t 500 --gres=gpu:1 test_alg
 cmake3 -DENABLE_TESTING=OFF -DVERBOSE=ON ..
 make -j5
 
+cmake3 -DMPI=ON ..
+make -j5
+
+cmake3 -DOPENMP=ON ..
+make -j5
+
+cmake3 -DTRCOUNTING=OFF ..
+make -j5
+
+cmake3 -DTRCOUNTING=ON -DCODEGPU=OFF ..
+make -j5
