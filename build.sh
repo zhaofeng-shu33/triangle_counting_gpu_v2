@@ -9,3 +9,7 @@ cmake3 -DENABLE_TESTING=ON ..
 make -j5
 srun -t 500 --gres=gpu:1 test_alg
 
+## test other configuration 
+cmake3 -DENABLE_TESTING=OFF -DVERBOSE=ON ..
+make -j5
+
