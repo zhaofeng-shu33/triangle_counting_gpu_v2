@@ -59,6 +59,25 @@ int main(int argc, char *argv[]) {
     // Compute Split Information
     int split_num = GetSplitNum(trCountingGraph.nodeid_max, cpu_offset_end);
     
+#if USEMPI
+    // syns split_num across ranks.
+    int split_num_others = 0;
+    MPI_Status Stat;
+    if(rank == 0) {
+        for(int i = 1; i < numtasks; i++) {
+            MPI_Recv(&split_num_others, 1, MPI_INT, i, i, MPI_COMM_WORLD, &Stat);
+            split_num = split_num > split_num_others ? split_num : split_num_others;
+        }
+        for(int i = 1; i < numtasks; i++) {
+            MPI_Send(&split_num, 1, MPI_INT, i, i, MPI_COMM_WORLD);
+        }
+    }
+    else {
+        MPI_Send(&split_num, 1, MPI_INT, 0, rank, MPI_COMM_WORLD);
+        MPI_Recv(&split_num, 1, MPI_INT, 0, rank, MPI_COMM_WORLD, &Stat);
+    }
+#endif  
+    
     // Last k% edges will be calculated by cpu.
     if(split_num > 1) {
 #if USEMPI
