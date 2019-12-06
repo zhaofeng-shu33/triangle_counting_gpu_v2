@@ -11,6 +11,7 @@
 #include <thread>
 #include <inttypes.h>
 #include <unistd.h>
+#include <exception>
 #if VERBOSE
 #include <time.h>
 #endif
@@ -55,6 +56,7 @@ int main(int argc, char *argv[]) {
 #endif
     int64_t result = 0;
     int64_t cpu_offset_end = trCountingGraph.offset[trCountingGraph.nodeid_max + 1];
+    try {
 #if GPU    
     // Compute Split Information
     int split_num = GetSplitNum(trCountingGraph.nodeid_max, cpu_offset_end);
@@ -111,6 +113,9 @@ int main(int argc, char *argv[]) {
     cpu_counting_edge_first_v2(&trCountingGraph, 0, cpu_offset_end, &result);
 #endif
 #endif
+   } catch (const std::exception& e) {
+       printf(e.what());
+   }
 #if USEMPI
     if (rank == 0) {
         // receive computing results from rank > 1
