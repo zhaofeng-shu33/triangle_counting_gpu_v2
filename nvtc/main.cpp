@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
     }
 
     TrCountingGraph trCountingGraph(file_name);
+    printf("Data Reading Done.\n");
 
 #if TRCOUNTING
 #if VERBOSE
