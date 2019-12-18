@@ -29,6 +29,7 @@ class TrCountingGraphChunk{
 
         // members in gpu mem
         TrCountingGraphChunk* dev_this;
+        uint64_t* dev_results;
         int64_t* dev_offset;
         int* dev_degree;
         int* dev_neighbor_i;
