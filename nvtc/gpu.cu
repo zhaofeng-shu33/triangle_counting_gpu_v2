@@ -277,10 +277,10 @@ void InitializeGPUMemory() {
     
 }
 
-void calculation_thread(const TrCountingGraph& TrCountingGraph, int split_num, int64_t cpu_offset,int gpu_offset_start, int gpu_offset_end, int rank, int step, int64_t* result_temp){
+void calculation_thread(TrCountingGraph* TrCountingGraph, int split_num, int64_t cpu_offset,int gpu_offset_start, int gpu_offset_end, int rank, int step, int64_t* result_temp){
   CUCHECK(cudaSetDevice(rank));
   const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();
-  TrCountingGraphChunk chunk(TrCountingGraph, split_num, cpu_offset);
+  TrCountingGraphChunk chunk(*TrCountingGraph, split_num, cpu_offset);
   int64_t result=0;
   for(int ij = gpu_offset_start+rank; ij < gpu_offset_end; ij=ij+step) {
       int i, j;
@@ -296,7 +296,7 @@ void calculation_thread(const TrCountingGraph& TrCountingGraph, int split_num, i
   *result_temp = result;
 }
 
-uint64_t GpuForwardSplit_v2(const TrCountingGraph& TrCountingGraph, 
+uint64_t GpuForwardSplit_v2(TrCountingGraph& TrCountingGraph, 
     int split_num, int64_t cpu_offset,
     int gpu_offset_start, int gpu_offset_end) {
     
@@ -304,9 +304,8 @@ uint64_t GpuForwardSplit_v2(const TrCountingGraph& TrCountingGraph,
     int64_t result = 0;
     int64_t* result_temp = new int64_t[DevNum];
     thread** thread_list = new thread*[DevNum];
-    printf("Hi there\n");
     for(int i=0;i<DevNum;i++){
-      thread_list[i] = new thread(calculation_thread,TrCountingGraph,split_num,cpu_offset,gpu_offset_start,gpu_offset_end,i,DevNum,result_temp+i);
+      thread_list[i] = new thread(calculation_thread,&TrCountingGraph,split_num,cpu_offset,gpu_offset_start,gpu_offset_end,i,DevNum,result_temp+i);
     }
     for(int i=0;i<DevNum;i++){
       thread_list[i]->join();
