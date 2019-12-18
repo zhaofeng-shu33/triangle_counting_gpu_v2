@@ -47,7 +47,7 @@ __global__ void UnzipEdges(int m, int* edges, int* unzipped_edges) {
     unzipped_edges[m + i] = edges[2 * i + 1];
   }
 }
-__global__ void CalculateTrianglesSplit_v2(TrCountingGraphChunk* chunk, int n, int deviceCount = 1, int deviceIdx = 0) {
+__global__ void CalculateTrianglesSplit_v2(TrCountingGraphChunk* chunk, int deviceCount = 1, int deviceIdx = 0) {
     int from =
     gridDim.x * blockDim.x * deviceIdx +
     blockDim.x * blockIdx.x +
@@ -55,7 +55,7 @@ __global__ void CalculateTrianglesSplit_v2(TrCountingGraphChunk* chunk, int n, i
   int step = deviceCount * gridDim.x * blockDim.x;
   
   uint64_t count = 0;
-  for (int k = from; k < n; k += step) {
+  for (int k = from; k < chunk->length; k += step) {
     int i =  chunk->dev_neighbor_start_i[k]; 
     int j =  chunk->dev_neighbor_i[k]; 
     if (j == 2147483647 || chunk->dev_offset[j] < chunk->dev_split_offset[chunk->chunkid_j] || chunk->dev_offset[j] >= chunk->dev_split_offset[chunk->chunkid_j+1]) 
@@ -238,7 +238,7 @@ uint64_t GpuForward(int* edges, int num_nodes, uint64_t num_edges) {
 
 uint64_t GpuForward_v2(const TrCountingGraph& TrCountingGraph) {
     const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();
-    TrCountingGraphChunk chunk(TrCountingGraph, 1);
+    TrCountingGraphChunk chunk(TrCountingGraph, 1, TrCountingGraph.edge_num);
 
     uint64_t* dev_results;
     CUCHECK(cudaMalloc(&dev_results,
@@ -278,11 +278,11 @@ void InitializeGPUMemory() {
 
 uint64_t GpuForwardSplit_v2(const TrCountingGraph& TrCountingGraph, 
     int split_num, int64_t cpu_offset,
-    int gpu_offset_start, int gpu_offset_end, int rank, int step) {
+    int gpu_offset_start, int gpu_offset_end) {
     CUCHECK(cudaSetDevice(0));
     const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();
     
-    TrCountingGraphChunk chunk(TrCountingGraph, split_num);
+    TrCountingGraphChunk chunk(TrCountingGraph, split_num, cpu_offset);
 
     int64_t result=0;
     for(int ij = gpu_offset_start; ij < gpu_offset_end; ij++) {
@@ -291,8 +291,8 @@ uint64_t GpuForwardSplit_v2(const TrCountingGraph& TrCountingGraph,
         if(chunk.split_offset[i] >= cpu_offset)
             break;
         chunk.initChunk(i, j);
-        int length = cpu_offset>chunk.split_offset[i+1]?chunk.split_offset[i+1]-chunk.split_offset[i]:cpu_offset-chunk.split_offset[i];
-        CalculateTrianglesSplit_v2<<<NUM_BLOCKS, NUM_THREADS>>>(chunk.dev_this, length);
+        
+        CalculateTrianglesSplit_v2<<<NUM_BLOCKS, NUM_THREADS>>>(chunk.dev_this);
         CUCHECK(cudaDeviceSynchronize());
         result = result + SumResults(NUM_BLOCKS * NUM_THREADS, chunk.dev_results);
     }
@@ -362,10 +362,11 @@ void PreInitGpuContext(int device) {
   CUCHECK(cudaFree(NULL));
 }
 
-TrCountingGraphChunk::TrCountingGraphChunk(const TrCountingGraph& g, int split_num){
+TrCountingGraphChunk::TrCountingGraphChunk(const TrCountingGraph& g, int split_num, int64_t cpu_task){
   chunk_length_max = get_split_v2(g.offset, g.nodeid_max, split_num, split_offset);
   // device memory initialization
   const int NUM_BLOCKS = NUM_BLOCKS_PER_MP * NumberOfMPs();
+  cpu_offset = cpu_task;
   CUCHECK(cudaMalloc(&dev_results, NUM_BLOCKS * NUM_THREADS * sizeof(uint64_t)));
   CUCHECK(cudaMalloc(&dev_offset, (g.nodeid_max + 2) * sizeof(int64_t)));
   CUCHECK(cudaMemcpy(
@@ -398,6 +399,7 @@ TrCountingGraphChunk::TrCountingGraphChunk(const TrCountingGraph& g, int split_n
 void TrCountingGraphChunk::initChunk(int i, int j){
   chunkid_i = i;
   chunkid_j = j;
+  length = cpu_offset>split_offset[i+1]?split_offset[i+1]-split_offset[i]:cpu_offset-split_offset[i];
   CUCHECK(cudaMemcpy(
     dev_neighbor_i, Graph->neighboor+split_offset[i], (split_offset[i+1]-split_offset[i])*sizeof(int), cudaMemcpyHostToDevice));
   CUCHECK(cudaMemcpy(

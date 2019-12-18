@@ -7,7 +7,7 @@
 int GetDevNum();
 int GetSplitNum(int num_nodes, uint64_t num_edges);
 uint64_t GpuForward_v2(const TrCountingGraph& TrCountingGraph);
-uint64_t GpuForwardSplit_v2(const TrCountingGraph& TrCountingGraph, int split_num, int64_t cpu_offset, int gpu_offset_start, int gpu_offset_end, int rank = 0, int step = 1);
+uint64_t GpuForwardSplit_v2(const TrCountingGraph& TrCountingGraph, int split_num, int64_t cpu_offset, int gpu_offset_start, int gpu_offset_end);
 void PreInitGpuContext(int device = 0);
 uint64_t GpuForward(int* edges, int num_nodes, uint64_t num_edges);
 uint64_t MultiGpuForward(int* edges, int device_count, int num_nodes, uint64_t num_edges);
@@ -16,7 +16,7 @@ class TrCountingGraphChunk{
     public:
         // Constructor, Initilize everything we need in gpu. 
         // Note: In split version data like dev_neighbor_i is not initilized by this constrictor. call initChunk(int i, int j) to clear what you need.
-        TrCountingGraphChunk(const TrCountingGraph &g, int split_num);
+        TrCountingGraphChunk(const TrCountingGraph &g, int split_num, int64_t cpu_task);
         
         // Get chunk i and j ready in gpu.
         void initChunk(int i, int j);
@@ -40,5 +40,7 @@ class TrCountingGraphChunk{
         int* dev_neighbor_start;
         int chunkid_i;
         int chunkid_j;
+        int length;
+        int64_t cpu_offset;
 };
 #endif
