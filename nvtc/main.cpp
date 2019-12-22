@@ -60,7 +60,6 @@ int main(int argc, char *argv[]) {
     try {
 #if GPU    
     // Compute Split Information
-    int DevNum = GetDevNum();
     int split_num = GetSplitNum(trCountingGraph.nodeid_max, cpu_offset_end);
     
 #if USEMPI
