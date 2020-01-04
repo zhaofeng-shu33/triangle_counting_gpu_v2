@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 #endif  
     
     // Last k% edges will be calculated by cpu.
-    if(split_num > 1) {
+    if (split_num > 1) {
 #if USEMPI
         int gpu_offset_rank_start = split_num * split_num * rank / numtasks;
         int gpu_offset_rank_end = split_num * split_num * (rank + 1) / numtasks;
@@ -95,15 +95,23 @@ int main(int argc, char *argv[]) {
         cpu_thread.join();
         result = result + cpu_result;
 #endif
-    }
-    else {
-#if USEMPI
+    } else if (split_num == 1) {
+#if USEMPI // for small dataset, only computing using node with rank = 0
         if(rank == 0) {
             result = GpuForward_v2(trCountingGraph);
         }
 #else
         result = GpuForward_v2(trCountingGraph);
 #endif
+    } else { // fall back to use cpu
+#if USEMPI
+        int64_t cpu_offset_rank_start = rank * cpu_offset_end / numtasks;
+        int64_t cpu_offset_rank_end = (rank + 1) * cpu_offset_end / numtasks;
+        cpu_counting_edge_first_v2(&trCountingGraph, cpu_offset_rank_start, cpu_offset_rank_end, &result);
+#else
+        cpu_counting_edge_first_v2(&trCountingGraph, 0, cpu_offset_end, &result);
+#endif
+
     }
 #else
 #if USEMPI
